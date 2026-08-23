@@ -1,4 +1,5 @@
 export interface PizzaSizeOption {
+  id?: string;
   name: string;
   priceOffset: number;
 }
@@ -114,3 +115,16 @@ export interface Review {
   date: string;
   createdAt?: string;
 }
+
+export interface DBData {
+  admin: {
+    username: string;
+    password: string;
+  };
+  settings: StoreSettings;
+  categories: Category[];
+  items: MenuItem[];
+  orders: Order[];
+  reviews: Review[];
+}
+

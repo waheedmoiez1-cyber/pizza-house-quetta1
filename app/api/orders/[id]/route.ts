@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDBData, saveDBData, getOrderById, verifyAdminSessionCookie } from '@/lib/db';
+import { Order } from '@/lib/types';
 
 export async function GET(
   request: Request,
@@ -30,7 +31,7 @@ export async function PUT(
     const body = await request.json();
     const data = getDBData();
 
-    const orderIndex = data.orders.findIndex((o) => o.id === id || o.orderNumber === id);
+    const orderIndex = data.orders.findIndex((o: Order) => o.id === id || o.orderNumber === id);
 
     if (orderIndex === -1) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
@@ -65,7 +66,7 @@ export async function PATCH(
     const body = await request.json();
     const data = getDBData();
 
-    const orderIndex = data.orders.findIndex((o) => o.id === id || o.orderNumber === id);
+    const orderIndex = data.orders.findIndex((o: Order) => o.id === id || o.orderNumber === id);
 
     if (orderIndex === -1) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
@@ -104,7 +105,7 @@ export async function DELETE(
     const { id } = await params;
     const data = getDBData();
 
-    const orderIndex = data.orders.findIndex((o) => o.id === id || o.orderNumber === id);
+    const orderIndex = data.orders.findIndex((o: Order) => o.id === id || o.orderNumber === id);
 
     if (orderIndex === -1) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });

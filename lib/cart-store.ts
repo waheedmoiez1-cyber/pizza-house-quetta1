@@ -18,6 +18,7 @@ interface CartState {
   openCart: () => void;
   closeCart: () => void;
   applyPromoCode: (code: string) => { success: boolean; message: string };
+  removePromoCode: () => void;
   
   // Derived helpers
   getItemCount: () => number;
@@ -123,6 +124,8 @@ export const useCartStore = create<CartState>()(
         }
         return { success: false, message: 'Invalid promo code. Try WELCOME10' };
       },
+
+      removePromoCode: () => set({ promoCode: '', discountPercentage: 0 }),
 
       getItemCount: () => {
         return get().items.reduce((total, i) => total + i.quantity, 0);

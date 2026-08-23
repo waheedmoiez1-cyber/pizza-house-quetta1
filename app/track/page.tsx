@@ -3,11 +3,11 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { Search, MapPin, Phone, Package, Clock, CheckCircle2, Truck, CookingPot, MessageCircle, AlertCircle, ArrowLeft, RefreshCw, Sparkles } from 'lucide-react';
 import { Order, OrderStatus } from '@/lib/types';
 
-const timelineContainerVariants = {
+const timelineContainerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -17,7 +17,7 @@ const timelineContainerVariants = {
   },
 };
 
-const timelineItemVariants = {
+const timelineItemVariants: Variants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
   visible: {
     opacity: 1,

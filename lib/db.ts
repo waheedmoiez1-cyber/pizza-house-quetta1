@@ -87,16 +87,16 @@ export function verifyAdminSessionCookie(cookieHeader?: string | null): boolean 
 // Menu Items helper functions
 export function getMenuItems(category?: string, search?: string): MenuItem[] {
   const db = getDBData();
-  let items = db.items || [];
+  let items: MenuItem[] = db.items || [];
 
   if (category && category !== 'all') {
-    items = items.filter((item) => item.categoryId === category);
+    items = items.filter((item: MenuItem) => item.categoryId === category);
   }
 
   if (search && search.trim()) {
     const q = search.toLowerCase().trim();
     items = items.filter(
-      (item) =>
+      (item: MenuItem) =>
         item.name.toLowerCase().includes(q) ||
         (item.description && item.description.toLowerCase().includes(q))
     );
@@ -107,12 +107,12 @@ export function getMenuItems(category?: string, search?: string): MenuItem[] {
 
 export function getMenuItemById(id: string): MenuItem | undefined {
   const db = getDBData();
-  return db.items.find((item) => item.id === id);
+  return db.items.find((item: MenuItem) => item.id === id);
 }
 
 export function getMenuItemBySlug(slug: string): MenuItem | undefined {
   const db = getDBData();
-  return db.items.find((item) => item.slug === slug);
+  return db.items.find((item: MenuItem) => item.slug === slug);
 }
 
 export function createMenuItem(itemData: Omit<MenuItem, 'id' | 'createdAt'>): MenuItem {
@@ -134,7 +134,7 @@ export function addMenuItem(itemData: Omit<MenuItem, 'id' | 'createdAt'>): MenuI
 
 export function updateMenuItem(id: string, updates: Partial<MenuItem>): MenuItem | null {
   const db = getDBData();
-  const index = db.items.findIndex((item) => item.id === id);
+  const index = db.items.findIndex((item: MenuItem) => item.id === id);
   if (index === -1) return null;
 
   db.items[index] = { ...db.items[index], ...updates };
@@ -145,7 +145,7 @@ export function updateMenuItem(id: string, updates: Partial<MenuItem>): MenuItem
 export function deleteMenuItem(id: string): boolean {
   const db = getDBData();
   const initialLen = db.items.length;
-  db.items = db.items.filter((item) => item.id !== id);
+  db.items = db.items.filter((item: MenuItem) => item.id !== id);
   if (db.items.length < initialLen) {
     saveDBData(db);
     return true;
@@ -160,7 +160,7 @@ export function toggleInventoryStatus(id: string, isAvailable: boolean): MenuIte
 // Categories helper functions
 export function getCategories(): Category[] {
   const db = getDBData();
-  return db.categories.sort((a, b) => a.sortOrder - b.sortOrder);
+  return (db.categories || []).sort((a: Category, b: Category) => a.sortOrder - b.sortOrder);
 }
 
 export function addCategory(category: Omit<Category, 'id'>): Category {
@@ -174,7 +174,7 @@ export function addCategory(category: Omit<Category, 'id'>): Category {
 
 export function updateCategory(id: string, updates: Partial<Category>): Category | null {
   const db = getDBData();
-  const index = db.categories.findIndex((c) => c.id === id);
+  const index = db.categories.findIndex((c: Category) => c.id === id);
   if (index === -1) return null;
   db.categories[index] = { ...db.categories[index], ...updates };
   saveDBData(db);
@@ -184,7 +184,7 @@ export function updateCategory(id: string, updates: Partial<Category>): Category
 export function deleteCategory(id: string): boolean {
   const db = getDBData();
   const initialLen = db.categories.length;
-  db.categories = db.categories.filter((c) => c.id !== id);
+  db.categories = db.categories.filter((c: Category) => c.id !== id);
   if (db.categories.length < initialLen) {
     saveDBData(db);
     return true;
@@ -208,7 +208,7 @@ export function updateSettings(newSettings: Partial<StoreSettings>): StoreSettin
 // Orders helper functions
 export function getOrders(): Order[] {
   const db = getDBData();
-  return db.orders.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return (db.orders || []).sort((a: Order, b: Order) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export function getOrderById(id: string): Order | undefined {
@@ -216,7 +216,7 @@ export function getOrderById(id: string): Order | undefined {
   const cleanId = (id || '').trim().replace(/^#+/, '');
   const searchDigits = cleanId.replace(/\D/g, '');
 
-  return db.orders.find((o) => {
+  return (db.orders || []).find((o: Order) => {
     const oId = (o.id || '').replace(/^#+/, '');
     const oNum = (o.orderNumber || '').replace(/^#+/, '');
     const phone = (o.phone || o.customerPhone || '').replace(/\D/g, '');
@@ -238,7 +238,7 @@ export function getOrderById(id: string): Order | undefined {
 
 export function createOrder(orderData: Omit<Order, 'id' | 'orderNumber' | 'createdAt' | 'orderStatus'>): Order {
   const db = getDBData();
-  const count = db.orders.length + 1002;
+  const count = (db.orders?.length || 0) + 1002;
   const orderNumber = `PHQ-${count}`;
   const id = `ord-${Date.now()}`;
   const newOrder: Order = {
@@ -255,7 +255,7 @@ export function createOrder(orderData: Omit<Order, 'id' | 'orderNumber' | 'creat
 
 export function updateOrderStatus(id: string, status: Order['orderStatus']): Order | null {
   const db = getDBData();
-  const index = db.orders.findIndex((o) => o.id === id || o.orderNumber === id);
+  const index = db.orders.findIndex((o: Order) => o.id === id || o.orderNumber === id);
   if (index === -1) return null;
 
   db.orders[index].orderStatus = status;
@@ -270,7 +270,7 @@ export function updateOrderStatus(id: string, status: Order['orderStatus']): Ord
 // Reviews helper functions
 export function getReviews(): Review[] {
   const db = getDBData();
-  return db.reviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return (db.reviews || []).sort((a: Review, b: Review) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime());
 }
 
 export function addReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'date'>): Review {

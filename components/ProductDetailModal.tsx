@@ -323,11 +323,11 @@ export default function ProductDetailModal({ item, isOpen = true, onClose }: Pro
 
                   <div className="grid grid-cols-2 gap-3">
                     {sizeList.map((sz) => {
-                      const isSelected = selectedSize?.id === sz.id;
+                      const isSelected = selectedSize?.id ? selectedSize.id === sz.id : selectedSize?.name === sz.name;
                       const calculatedSizePrice = basePrice + sz.priceOffset;
                       return (
                         <button
-                          key={sz.id}
+                          key={sz.id || sz.name}
                           type="button"
                           onClick={() => setSelectedSize(sz)}
                           className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
