@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     (function() {
       try {
         var saved = localStorage.getItem('phq_theme');
-        var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+        var theme = saved || 'dark';
         document.documentElement.setAttribute('data-theme', theme);
         if (theme === 'light') {
           document.documentElement.classList.add('light');
