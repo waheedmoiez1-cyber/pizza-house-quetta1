@@ -126,12 +126,21 @@ export function getDBData(): DBData {
 export async function getDBDataAsync(): Promise<DBData> {
   const now = Date.now();
   // If Cloud KV configured and not fetched recently (or no memory cache), check cloud
-  if (KV_REST_API_URL && KV_REST_API_TOKEN && (!inMemoryDB || now - lastCloudSync > 15000)) {
-    const cloudData = await fetchFromCloudKV();
-    if (cloudData) {
-      inMemoryDB = cloudData;
-      lastCloudSync = now;
-      return inMemoryDB;
+  if (KV_REST_API_URL && KV_REST_API_TOKEN) {
+    if (!inMemoryDB || now - lastCloudSync > 15000) {
+      const cloudData = await fetchFromCloudKV();
+      if (cloudData) {
+        inMemoryDB = cloudData;
+        lastCloudSync = now;
+        return inMemoryDB;
+      } else {
+        // First-time initialization: Auto-seed Upstash Redis cloud database!
+        const initial = getDBData();
+        await syncToCloudKV(initial);
+        inMemoryDB = initial;
+        lastCloudSync = now;
+        return inMemoryDB;
+      }
     }
   }
   return getDBData();
