@@ -114,6 +114,19 @@ export default function AdminLoginPage() {
             </button>
           </div>
         </form>
+
+        {/* Footer info & Home link */}
+        <div className="mt-8 pt-6 border-t border-white/10 flex flex-col items-center gap-3 text-center">
+          <div className="text-[11px] text-white/50 bg-black/40 px-3 py-1.5 rounded-xl border border-white/5 font-mono">
+            Default credentials: <span className="text-[#F4B93B] font-bold">admin</span> / <span className="text-[#F4B93B] font-bold">Dtan@1234</span>
+          </div>
+          <a
+            href="/"
+            className="text-xs text-white/60 hover:text-white transition-colors underline decoration-white/20 underline-offset-4"
+          >
+            ← Back to Public Website
+          </a>
+        </div>
       </div>
     </div>
   );

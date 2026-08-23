@@ -755,61 +755,6 @@
   ],
   "orders": [
     {
-      "customerName": "moiez waheed",
-      "customerPhone": "031333331411",
-      "customerEmail": "waheedmoiez1@gmail.com",
-      "orderType": "pickup",
-      "address": "Store Pickup (Toghi Road Quetta)",
-      "landmark": "",
-      "paymentMethod": "Cash on Delivery",
-      "paymentStatus": "paid",
-      "subtotal": 5745,
-      "tax": 0,
-      "deliveryFee": 0,
-      "discount": 0,
-      "total": 5745,
-      "items": [
-        {
-          "id": "p-1",
-          "name": "Chicken Tikka Pizza",
-          "price": 605,
-          "quantity": 7,
-          "selectedAddOns": [],
-          "totalPrice": 4235,
-          "image": "/images/tikka_pizza.jpg"
-        },
-        {
-          "id": "p-1",
-          "name": "Chicken Tikka Pizza",
-          "price": 905,
-          "quantity": 1,
-          "selectedSize": "Small 9\"",
-          "selectedAddOns": [
-            "Crust: Cheese Burst Stuffed Rim"
-          ],
-          "totalPrice": 905,
-          "image": "/images/tikka_pizza.jpg"
-        },
-        {
-          "id": "p-2",
-          "name": "Chicken Fajita Pizza",
-          "price": 605,
-          "quantity": 1,
-          "selectedSize": "Small 9\"",
-          "selectedAddOns": [],
-          "totalPrice": 605,
-          "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=800&auto=format&fit=crop"
-        }
-      ],
-      "notes": "",
-      "id": "ord-1787161509063",
-      "orderNumber": "PHQ-1009",
-      "orderStatus": "Delivered",
-      "createdAt": "2026-08-19T17:45:09.063Z",
-      "status": "Delivered",
-      "updatedAt": "2026-08-19T17:50:22.461Z"
-    },
-    {
       "customerName": "warda baloch bukhari ",
       "customerPhone": "0333789865",
       "customerEmail": "waheedmoiez1@gmail.com",

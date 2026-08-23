@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCategories, addCategory, updateCategory, deleteCategory } from '@/lib/db';
+import { getCategories, addCategory, updateCategory, deleteCategory, getDBDataAsync } from '@/lib/db';
 
 export async function GET() {
   try {
+    await getDBDataAsync();
     const categories = getCategories();
     return NextResponse.json({ success: true, categories });
   } catch (error: any) {

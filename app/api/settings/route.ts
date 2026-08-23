@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSettings, updateSettings } from '@/lib/db';
+import { getSettings, updateSettings, getDBDataAsync } from '@/lib/db';
 
 export async function GET() {
   try {
+    await getDBDataAsync();
     const settings = getSettings();
     return NextResponse.json({ success: true, settings });
   } catch (error: any) {

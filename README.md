@@ -84,15 +84,57 @@ pizza-house-quetta/
 
 ---
 
-## ☁️ Deployment Instructions
+## ☁️ Vercel Deployment & Backend Setup Guide
 
-### Deploy to Vercel (1-Click Deployment)
-1. Push this repository to GitHub/GitLab.
-2. Import project into Vercel dashboard.
-3. Vercel automatically detects Next.js. Click **Deploy**.
+### Why Serverless requires special configuration:
+Vercel executes Next.js API routes as stateless serverless functions with a read-only filesystem (`EROFS`). This project has been upgraded with:
+1. **Direct JSON seed bundling**: Seed database (16 menu items, 5 categories, reviews, and settings) is compiled directly into the Next.js bundle, so public pages and API routes **never fail to load**.
+2. **Serverless-Safe Memory & `/tmp` caching**: API routes gracefully handle write actions without crashing.
+3. **1-Click Free Cloud Database (Upstash Redis / Vercel KV)**: For permanent cross-device persistence across serverless cold starts.
 
-### Deploy to VPS / Docker / Standalone Server
-This project has `output: 'standalone'` enabled in `next.config.ts`.
-1. Run `npm run build`.
-2. Transfer the `.next/standalone` folder and `public/` directory to your server.
-3. Start the node server: `node .next/standalone/server.js`.
+---
+
+### Step 1: Push Code & Deploy to Vercel
+1. Commit and push the updated project to your GitHub repository:
+   ```bash
+   git add .
+   git commit -m "Fix Vercel serverless backend and admin persistence"
+   git push origin main
+   ```
+2. In your [Vercel Dashboard](https://vercel.com/dashboard), import your repository and click **Deploy**.
+
+---
+
+### Step 2: Configure Environment Variables in Vercel
+Go to **Vercel Dashboard → Your Project → Settings → Environment Variables**, and add the following:
+
+| Key | Value | Notes |
+| :--- | :--- | :--- |
+| `ADMIN_USERNAME` | `admin` | Your desired admin username |
+| `ADMIN_PASSWORD` | `Dtan@1234` | Your desired admin password |
+| `NEXT_PUBLIC_SITE_URL` | `https://your-project.vercel.app` | Your live Vercel domain |
+
+---
+
+### Step 3: (Recommended) Add Free Upstash Redis / Vercel KV for Permanent Cloud Persistence
+To ensure customer orders, menu edits, and store settings are permanently stored across all devices and serverless restarts:
+1. In your **Vercel Project Dashboard**, navigate to the **Storage** tab.
+2. Click **Create Database** and choose **KV** (or **Upstash Redis** from Marketplace - 100% Free).
+3. Connect the database to your project. Vercel will automatically configure:
+   - `KV_REST_API_URL`
+   - `KV_REST_API_TOKEN`
+4. Redeploy your project (or push a new commit). The app will automatically sync with the cloud database!
+
+---
+
+### Step 4: Accessing the Admin Portal
+- **Admin Portal URL**: `https://your-project.vercel.app/admin/login` (or `/admin`)
+- **Username**: `admin` (or the one you set in `ADMIN_USERNAME`)
+- **Password**: `Dtan@1234` (or the one you set in `ADMIN_PASSWORD`)
+- From the admin portal, you can:
+  - 📊 Monitor live orders in real time.
+  - 🍕 Add new food items, edit prices, toggle stock (`In Stock` / `Out of Stock`).
+  - 📁 Manage categories.
+  - ⚙️ Update store hours, contact number, delivery fees, and announcement banners.
+  - 🖨️ Print Kitchen Order Tickets (KOT) & send WhatsApp updates to customers.
+

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMenuItems, addMenuItem, getCategories } from '@/lib/db';
+import { getMenuItems, addMenuItem, getCategories, getDBDataAsync } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || undefined;
     const search = searchParams.get('search') || undefined;
 
+    await getDBDataAsync();
     const items = getMenuItems(category, search);
     const categories = getCategories();
 

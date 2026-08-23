@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getOrders, createOrder } from '@/lib/db';
+import { getOrders, createOrder, getDBDataAsync } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    await getDBDataAsync();
     const orders = getOrders();
     return NextResponse.json({ success: true, orders });
   } catch (error: any) {

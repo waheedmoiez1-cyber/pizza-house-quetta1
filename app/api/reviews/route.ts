@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getDBData, saveDBData } from '@/lib/db';
+import { getDBData, saveDBData, getDBDataAsync } from '@/lib/db';
 
 export async function GET() {
-  const data = getDBData();
+  const data = await getDBDataAsync();
   return NextResponse.json(data.reviews || []);
 }
 
