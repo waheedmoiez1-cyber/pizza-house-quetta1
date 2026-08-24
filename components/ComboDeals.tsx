@@ -10,6 +10,7 @@ import { MenuItem } from '@/lib/types';
 
 export default function ComboDeals() {
   const [addedDealId, setAddedDealId] = useState<string | null>(null);
+  const [dealImages, setDealImages] = useState<Record<string, string>>({});
   const addItem = useCartStore((state) => state.addItem);
 
   const deals: {
@@ -113,9 +114,10 @@ export default function ComboDeals() {
                   {/* Image Frame */}
                   <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden mb-5 bg-black border border-[var(--color-border)] shadow-xl">
                     <Image
-                      src={deal.image}
+                      src={dealImages[deal.id] || deal.image}
                       alt={deal.title}
                       fill
+                      onError={() => setDealImages((prev) => ({ ...prev, [deal.id]: '/images/hero_pizza.jpg' }))}
                       className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />

@@ -32,6 +32,13 @@ export default function CartDrawer({
   const getTaxAmount = useCartStore((state) => state.getTaxAmount);
   const getDeliveryFee = useCartStore((state) => state.getDeliveryFee);
   const getGrandTotal = useCartStore((state) => state.getGrandTotal);
+  const [imgFallbacks, setImgFallbacks] = useState<Record<string, string>>({});
+
+  const getItemFallback = (catId?: string) => {
+    if (catId === 'burgers') return '/images/zinger_burger.jpg';
+    if (catId === 'pizza') return '/images/tikka_pizza.jpg';
+    return '/images/hero_pizza.jpg';
+  };
 
   const [inputCode, setInputCode] = useState('');
   const [promoError, setPromoError] = useState('');
@@ -154,9 +161,15 @@ export default function CartDrawer({
                   >
                     <div className="relative w-16 h-16 rounded-xl overflow-hidden bg-black shrink-0 border border-[var(--color-border)]">
                       <Image
-                        src={cartItem.item.image}
+                        src={imgFallbacks[cartItem.cartId] || cartItem.item.image}
                         alt={cartItem.item.name}
                         fill
+                        onError={() =>
+                          setImgFallbacks((prev) => ({
+                            ...prev,
+                            [cartItem.cartId]: getItemFallback(cartItem.item.categoryId),
+                          }))
+                        }
                         className="object-cover"
                       />
                     </div>

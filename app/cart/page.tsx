@@ -17,6 +17,13 @@ export default function CartPage() {
   const getTaxAmount = useCartStore((state) => state.getTaxAmount);
   const getDeliveryFee = useCartStore((state) => state.getDeliveryFee);
   const getGrandTotal = useCartStore((state) => state.getGrandTotal);
+  const [imgFallbacks, setImgFallbacks] = useState<Record<string, string>>({});
+
+  const getItemFallback = (catId?: string) => {
+    if (catId === 'burgers') return '/images/zinger_burger.jpg';
+    if (catId === 'pizza') return '/images/tikka_pizza.jpg';
+    return '/images/hero_pizza.jpg';
+  };
 
   const subtotal = getSubtotal();
   const discount = getDiscountAmount();
@@ -94,7 +101,18 @@ export default function CartPage() {
                 className="glass-card p-5 rounded-2xl border border-[var(--color-border)] flex items-center justify-between gap-4 transition-all shadow-lg"
               >
                 <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-black shrink-0 border border-[var(--color-border)]">
-                  <Image src={cartItem.item.image} alt={cartItem.item.name} fill className="object-cover" />
+                  <Image
+                    src={imgFallbacks[cartItem.cartId] || cartItem.item.image}
+                    alt={cartItem.item.name}
+                    fill
+                    onError={() =>
+                      setImgFallbacks((prev) => ({
+                        ...prev,
+                        [cartItem.cartId]: getItemFallback(cartItem.item.categoryId),
+                      }))
+                    }
+                    className="object-cover"
+                  />
                 </div>
 
                 <div className="flex-1 min-w-0">

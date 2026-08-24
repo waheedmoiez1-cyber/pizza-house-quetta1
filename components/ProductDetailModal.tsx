@@ -78,11 +78,20 @@ export default function ProductDetailModal({ item, isOpen = true, onClose }: Pro
   const [quantity, setQuantity] = useState(1);
   const [addedToast, setAddedToast] = useState(false);
   const [activeStep, setActiveStep] = useState<'size' | 'crust' | 'cheese' | 'toppings'>('size');
+  const [modalImgSrc, setModalImgSrc] = useState(item?.image || '/images/hero_pizza.jpg');
 
   const addItem = useCartStore((state) => state.addItem);
 
+  const getFallbackImage = () => {
+    if (!item) return '/images/hero_pizza.jpg';
+    if (item.categoryId === 'burgers') return '/images/zinger_burger.jpg';
+    if (item.categoryId === 'pizza') return '/images/tikka_pizza.jpg';
+    return '/images/hero_pizza.jpg';
+  };
+
   useEffect(() => {
     if (item) {
+      setModalImgSrc(item.image);
       setSelectedSize(sizeList.length > 0 ? sizeList[0] : undefined);
       setSelectedCrust(defaultCrustOptions[0]);
       setSelectedCheese(cheesePortionOptions[0]);
@@ -199,9 +208,10 @@ export default function ProductDetailModal({ item, isOpen = true, onClose }: Pro
                 {/* Food Image Container */}
                 <div className="relative aspect-[4/3] w-full rounded-3xl overflow-hidden mb-4 bg-black border border-[var(--color-border)] shadow-xl">
                   <Image
-                    src={item.image}
+                    src={modalImgSrc || item.image}
                     alt={item.name}
                     fill
+                    onError={() => setModalImgSrc(getFallbackImage())}
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />

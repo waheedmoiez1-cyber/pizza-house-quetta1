@@ -16,6 +16,13 @@ interface GlobalSearchModalProps {
 export default function GlobalSearchModal({ isOpen, onClose, items }: GlobalSearchModalProps) {
   const [query, setQuery] = useState('');
   const [addedItemId, setAddedItemId] = useState<string | null>(null);
+  const [imgFallbacks, setImgFallbacks] = useState<Record<string, string>>({});
+
+  const getItemFallback = (catId?: string) => {
+    if (catId === 'burgers') return '/images/zinger_burger.jpg';
+    if (catId === 'pizza') return '/images/tikka_pizza.jpg';
+    return '/images/hero_pizza.jpg';
+  };
 
   const addItem = useCartStore((state) => state.addItem);
 
@@ -102,9 +109,15 @@ export default function GlobalSearchModal({ isOpen, onClose, items }: GlobalSear
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-black shrink-0 border border-[var(--color-border)]">
                       <Image
-                        src={item.image}
+                        src={imgFallbacks[item.id] || item.image}
                         alt={item.name}
                         fill
+                        onError={() =>
+                          setImgFallbacks((prev) => ({
+                            ...prev,
+                            [item.id]: getItemFallback(item.categoryId),
+                          }))
+                        }
                         className="object-cover group-hover:scale-105 transition-transform"
                       />
                     </div>

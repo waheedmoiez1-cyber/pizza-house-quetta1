@@ -25,6 +25,13 @@ export default function AdminMenuPage() {
   const [formIsSpicy, setFormIsSpicy] = useState(false);
   const [formIsBestseller, setFormIsBestseller] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imgFallbacks, setImgFallbacks] = useState<Record<string, string>>({});
+
+  const getItemFallback = (catId?: string) => {
+    if (catId === 'burgers') return '/images/zinger_burger.jpg';
+    if (catId === 'pizza') return '/images/tikka_pizza.jpg';
+    return '/images/hero_pizza.jpg';
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -261,7 +268,18 @@ export default function AdminMenuPage() {
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-black shrink-0">
-                          <Image src={item.image} alt={item.name} fill className="object-cover" />
+                          <Image
+                            src={imgFallbacks[item.id] || item.image}
+                            alt={item.name}
+                            fill
+                            onError={() =>
+                              setImgFallbacks((prev) => ({
+                                ...prev,
+                                [item.id]: getItemFallback(item.categoryId),
+                              }))
+                            }
+                            className="object-cover"
+                          />
                         </div>
                         <div>
                           <h4 className="font-bold text-white text-sm flex items-center gap-1.5">
@@ -437,7 +455,13 @@ export default function AdminMenuPage() {
                 {formImage && (
                   <div className="mt-3 p-2 rounded-2xl bg-black/60 border border-white/10 flex items-center gap-3">
                     <div className="relative w-16 h-12 rounded-xl overflow-hidden bg-black shrink-0 border border-white/20">
-                      <Image src={formImage} alt="Preview" fill className="object-cover" />
+                      <Image
+                        src={formImage}
+                        alt="Preview"
+                        fill
+                        onError={() => setFormImage('/images/hero_pizza.jpg')}
+                        className="object-cover"
+                      />
                     </div>
                     <div className="overflow-hidden flex-1">
                       <p className="text-[10px] text-green-400 font-extrabold uppercase tracking-wider flex items-center gap-1">
