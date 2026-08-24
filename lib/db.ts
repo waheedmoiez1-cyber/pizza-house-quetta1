@@ -2,13 +2,33 @@ import fs from 'fs';
 import path from 'path';
 import { MenuItem, Category, StoreSettings, Order, Review, DBData } from './types';
 import seedData from '../data/db.json';
+import {
+  isMySQLEnabled,
+  fetchCategoriesFromMySQL,
+  fetchMenuItemsFromMySQL,
+  fetchOrdersFromMySQL,
+  fetchReviewsFromMySQL,
+  fetchStoreSettingsFromMySQL,
+  addMenuItemToMySQL,
+  updateMenuItemInMySQL,
+  deleteMenuItemFromMySQL,
+  addCategoryToMySQL,
+  updateCategoryInMySQL,
+  deleteCategoryFromMySQL,
+  createOrderInMySQL,
+  updateOrderStatusInMySQL,
+  deleteOrderFromMySQL,
+  addReviewToMySQL,
+  updateStoreSettingsInMySQL,
+} from './mysql';
 
 const LOCAL_DB_PATH = path.join(process.cwd(), 'data', 'db.json');
 const TMP_DB_PATH = path.join('/tmp', 'phq_db.json');
 
-// In-memory cache for fast serverless execution
+// In-memory cache for fast execution
 let inMemoryDB: DBData | null = null;
 let lastCloudSync = 0;
+let lastMySQLSync = 0;
 
 // Cloud KV / Upstash Redis credentials
 const KV_REST_API_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
@@ -23,7 +43,6 @@ export async function syncToCloudKV(data: DBData): Promise<boolean> {
     const baseUrl = KV_REST_API_URL.replace(/\/$/, '');
     const jsonPayload = JSON.stringify(data);
 
-    // Standard Upstash Redis REST command: POST / with ["SET", "phq_database", jsonString]
     const res = await fetch(`${baseUrl}/`, {
       method: 'POST',
       headers: {
@@ -34,7 +53,6 @@ export async function syncToCloudKV(data: DBData): Promise<boolean> {
     });
 
     if (!res.ok) {
-      // Direct REST fallback: POST /set/phq_database with raw jsonPayload
       const directRes = await fetch(`${baseUrl}/set/phq_database`, {
         method: 'POST',
         headers: {
@@ -81,7 +99,6 @@ export async function fetchFromCloudKV(): Promise<DBData | null> {
       return null;
     }
 
-    // Guarantee essential structure
     if (!Array.isArray(parsed.orders)) parsed.orders = [];
     if (!Array.isArray(parsed.items)) parsed.items = [];
     if (!Array.isArray(parsed.categories)) parsed.categories = [];
@@ -147,7 +164,7 @@ export function getDBData(): DBData {
     // Silently fall through
   }
 
-  // 3. Fallback to statically imported seed data (guarantees zero missing items)
+  // 3. Fallback to statically imported seed data
   const initial = (seedData as unknown as DBData) || {
     admin: { username: 'admin', password: 'Dtan@1234' },
     settings: {
@@ -157,8 +174,8 @@ export function getDBData(): DBData {
       phone: '0300-1234567',
       hours: 'Daily, 10:00 AM – 12:00 AM',
       isOpen: true,
-      taxRate: 5,
-      deliveryFee: 150,
+      taxRate: 15,
+      deliveryFee: 100,
       freeDeliveryThreshold: 1500,
       announcementText: '🔥 Midnight Craving Special: Free Delivery on orders above Rs. 1500! Call 0300-1234567',
       announcementActive: true,
@@ -178,11 +195,42 @@ export function getDBData(): DBData {
 }
 
 /**
- * Asynchronous getDBDataAsync that also checks Cloud KV when available
+ * Asynchronous getDBDataAsync that prioritizes MySQL database when enabled,
+ * and falls back to Cloud KV / Local JSON.
  */
 export async function getDBDataAsync(): Promise<DBData> {
   const now = Date.now();
-  // If Cloud KV configured and not fetched recently (or no memory cache), check cloud
+
+  // 1. Check MySQL if enabled
+  if (isMySQLEnabled() && (!inMemoryDB || now - lastMySQLSync > 5000)) {
+    try {
+      const [categories, items, orders, reviews, settings] = await Promise.all([
+        fetchCategoriesFromMySQL(),
+        fetchMenuItemsFromMySQL(),
+        fetchOrdersFromMySQL(),
+        fetchReviewsFromMySQL(),
+        fetchStoreSettingsFromMySQL(),
+      ]);
+
+      if (items !== null && categories !== null) {
+        const current = getDBData();
+        inMemoryDB = {
+          admin: current.admin || { username: 'admin', password: 'Dtan@1234' },
+          settings: settings || current.settings,
+          categories: categories || current.categories,
+          items: items || current.items,
+          orders: orders || current.orders,
+          reviews: reviews || current.reviews,
+        };
+        lastMySQLSync = now;
+        return inMemoryDB;
+      }
+    } catch (err) {
+      console.warn('MySQL read failed, falling back to cached/KV data:', err);
+    }
+  }
+
+  // 2. Check Cloud KV when available
   if (KV_REST_API_URL && KV_REST_API_TOKEN) {
     if (!inMemoryDB || now - lastCloudSync > 15000) {
       const cloudData = await fetchFromCloudKV();
@@ -191,7 +239,6 @@ export async function getDBDataAsync(): Promise<DBData> {
         lastCloudSync = now;
         return inMemoryDB;
       } else {
-        // First-time initialization: Auto-seed Upstash Redis cloud database!
         const initial = getDBData();
         await syncToCloudKV(initial);
         inMemoryDB = initial;
@@ -200,6 +247,7 @@ export async function getDBDataAsync(): Promise<DBData> {
       }
     }
   }
+
   return getDBData();
 }
 
@@ -227,13 +275,9 @@ export function saveDBData(data: DBData): void {
     }
     fs.writeFileSync(LOCAL_DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
   } catch (error) {
-    // On Vercel / read-only filesystem, writing to process.cwd() fails with EROFS.
-    // We gracefully try /tmp/phq_db.json
     try {
       fs.writeFileSync(TMP_DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
-    } catch (tmpErr) {
-      // Memory DB still updated
-    }
+    } catch (tmpErr) {}
   }
 
   // 2. Trigger Cloud KV sync asynchronously if configured
@@ -256,14 +300,12 @@ export function verifyAdminCredentials(username: string, password: string): bool
   const envUser = process.env.ADMIN_USERNAME;
   const envPass = process.env.ADMIN_PASSWORD;
 
-  // Priority 1: Environment Variables (e.g. set in Vercel Dashboard)
   if (envUser && envPass) {
     if (username === envUser && password === envPass) {
       return true;
     }
   }
 
-  // Priority 2: Database admin credentials
   const db = getDBData();
   if (db.admin?.username && db.admin?.password) {
     if (db.admin.username === username && db.admin.password === password) {
@@ -271,7 +313,6 @@ export function verifyAdminCredentials(username: string, password: string): bool
     }
   }
 
-  // Priority 3: Fallback default
   return username === 'admin' && password === 'Dtan@1234';
 }
 
@@ -289,7 +330,10 @@ export function verifyAdminSessionCookie(cookieHeader?: string | null): boolean 
   return isAdminSessionValid(value);
 }
 
+// -------------------------------------------------------------
 // Menu Items helper functions
+// -------------------------------------------------------------
+
 export function getMenuItems(category?: string, search?: string): MenuItem[] {
   const db = getDBData();
   let items: MenuItem[] = db.items || [];
@@ -331,6 +375,12 @@ export function createMenuItem(itemData: Omit<MenuItem, 'id' | 'createdAt'>): Me
   if (!db.items) db.items = [];
   db.items.unshift(item);
   saveDBData(db);
+
+  // Sync to MySQL asynchronously
+  if (isMySQLEnabled()) {
+    addMenuItemToMySQL(itemData).catch((e) => console.error('MySQL createMenuItem error:', e));
+  }
+
   return item;
 }
 
@@ -346,6 +396,12 @@ export function updateMenuItem(id: string, updates: Partial<MenuItem>): MenuItem
 
   db.items[index] = { ...db.items[index], ...updates };
   saveDBData(db);
+
+  // Sync to MySQL asynchronously
+  if (isMySQLEnabled()) {
+    updateMenuItemInMySQL(id, updates).catch((e) => console.error('MySQL updateMenuItem error:', e));
+  }
+
   return db.items[index];
 }
 
@@ -356,6 +412,10 @@ export function deleteMenuItem(id: string): boolean {
   db.items = db.items.filter((item: MenuItem) => item.id !== id);
   if (db.items.length < initialLen) {
     saveDBData(db);
+    // Sync to MySQL asynchronously
+    if (isMySQLEnabled()) {
+      deleteMenuItemFromMySQL(id).catch((e) => console.error('MySQL deleteMenuItem error:', e));
+    }
     return true;
   }
   return false;
@@ -365,7 +425,10 @@ export function toggleInventoryStatus(id: string, isAvailable: boolean): MenuIte
   return updateMenuItem(id, { isAvailable });
 }
 
+// -------------------------------------------------------------
 // Categories helper functions
+// -------------------------------------------------------------
+
 export function getCategories(): Category[] {
   const db = getDBData();
   return (db.categories || []).sort((a: Category, b: Category) => a.sortOrder - b.sortOrder);
@@ -378,6 +441,12 @@ export function addCategory(category: Omit<Category, 'id'>): Category {
   const newCat: Category = { ...category, id };
   db.categories.push(newCat);
   saveDBData(db);
+
+  // Sync to MySQL asynchronously
+  if (isMySQLEnabled()) {
+    addCategoryToMySQL(category).catch((e) => console.error('MySQL addCategory error:', e));
+  }
+
   return newCat;
 }
 
@@ -388,6 +457,12 @@ export function updateCategory(id: string, updates: Partial<Category>): Category
   if (index === -1) return null;
   db.categories[index] = { ...db.categories[index], ...updates };
   saveDBData(db);
+
+  // Sync to MySQL asynchronously
+  if (isMySQLEnabled()) {
+    updateCategoryInMySQL(id, updates).catch((e) => console.error('MySQL updateCategory error:', e));
+  }
+
   return db.categories[index];
 }
 
@@ -398,12 +473,19 @@ export function deleteCategory(id: string): boolean {
   db.categories = db.categories.filter((c: Category) => c.id !== id);
   if (db.categories.length < initialLen) {
     saveDBData(db);
+    // Sync to MySQL asynchronously
+    if (isMySQLEnabled()) {
+      deleteCategoryFromMySQL(id).catch((e) => console.error('MySQL deleteCategory error:', e));
+    }
     return true;
   }
   return false;
 }
 
+// -------------------------------------------------------------
 // Store Settings helper functions
+// -------------------------------------------------------------
+
 export function getSettings(): StoreSettings {
   const db = getDBData();
   return db.settings;
@@ -413,10 +495,19 @@ export function updateSettings(newSettings: Partial<StoreSettings>): StoreSettin
   const db = getDBData();
   db.settings = { ...db.settings, ...newSettings };
   saveDBData(db);
+
+  // Sync to MySQL asynchronously
+  if (isMySQLEnabled()) {
+    updateStoreSettingsInMySQL(newSettings).catch((e) => console.error('MySQL updateStoreSettings error:', e));
+  }
+
   return db.settings;
 }
 
+// -------------------------------------------------------------
 // Orders helper functions
+// -------------------------------------------------------------
+
 export function getOrders(): Order[] {
   const db = getDBData();
   return (db.orders || []).sort(
@@ -454,7 +545,7 @@ export function createOrder(
 ): Order {
   const db = getDBData();
   if (!Array.isArray(db.orders)) db.orders = [];
-  const count = (db.orders.length || 0) + 1002;
+  const count = (db.orders.length || 0) + 1009;
   const orderNumber = `PHQ-${count}`;
   const id = `ord-${Date.now()}`;
   const newOrder: Order = {
@@ -467,12 +558,30 @@ export function createOrder(
   };
   db.orders.unshift(newOrder);
   saveDBData(db);
+
   return newOrder;
 }
 
 export async function createOrderAsync(
   orderData: Omit<Order, 'id' | 'orderNumber' | 'createdAt' | 'orderStatus'>
 ): Promise<Order> {
+  // If MySQL is enabled, write to MySQL
+  if (isMySQLEnabled()) {
+    try {
+      const mysqlOrder = await createOrderInMySQL(orderData);
+      if (mysqlOrder) {
+        // Also update memory & local backup
+        const db = getDBData();
+        if (!Array.isArray(db.orders)) db.orders = [];
+        db.orders.unshift(mysqlOrder);
+        saveDBData(db);
+        return mysqlOrder;
+      }
+    } catch (e) {
+      console.warn('MySQL createOrderAsync failed, falling back to local/KV:', e);
+    }
+  }
+
   await getDBDataAsync();
   const order = createOrder(orderData);
   const db = getDBData();
@@ -492,10 +601,34 @@ export function updateOrderStatus(id: string, status: Order['orderStatus']): Ord
     db.orders[index].paymentStatus = 'paid';
   }
   saveDBData(db);
+
+  // Sync to MySQL asynchronously
+  if (isMySQLEnabled()) {
+    updateOrderStatusInMySQL(id, status).catch((e) => console.error('MySQL updateOrderStatus error:', e));
+  }
+
   return db.orders[index];
 }
 
+export function deleteOrder(id: string): boolean {
+  const db = getDBData();
+  if (!db.orders) return false;
+  const initialLen = db.orders.length;
+  db.orders = db.orders.filter((o: Order) => o.id !== id && o.orderNumber !== id);
+  if (db.orders.length < initialLen) {
+    saveDBData(db);
+    if (isMySQLEnabled()) {
+      deleteOrderFromMySQL(id).catch((e) => console.error('MySQL deleteOrder error:', e));
+    }
+    return true;
+  }
+  return false;
+}
+
+// -------------------------------------------------------------
 // Reviews helper functions
+// -------------------------------------------------------------
+
 export function getReviews(): Review[] {
   const db = getDBData();
   return (db.reviews || []).sort(
@@ -515,6 +648,11 @@ export function addReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'date'>)
   };
   db.reviews.unshift(newReview);
   saveDBData(db);
+
+  // Sync to MySQL asynchronously
+  if (isMySQLEnabled()) {
+    addReviewToMySQL(newReview).catch((e) => console.error('MySQL addReview error:', e));
+  }
+
   return newReview;
 }
-

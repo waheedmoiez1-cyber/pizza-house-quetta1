@@ -1,24 +1,31 @@
 import { NextResponse } from 'next/server';
-import { getDBData, saveDBData, getDBDataAsync } from '@/lib/db';
+import { getDBDataAsync, addReview } from '@/lib/db';
 
 export async function GET() {
-  const data = await getDBDataAsync();
-  return NextResponse.json(data.reviews || []);
+  try {
+    const data = await getDBDataAsync();
+    return NextResponse.json(data.reviews || []);
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error?.message || 'Failed to fetch reviews' },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, location, rating, comment, itemOrdered } = body;
+    const { name, location, rating, comment, itemOrdered, foodItem } = body;
 
     const sanitizedName = String(name || '').trim().slice(0, 100);
     const sanitizedComment = String(comment || '').trim().slice(0, 1000);
     const sanitizedLocation = String(location || 'Quetta').trim().slice(0, 100);
-    const sanitizedItem = String(itemOrdered || 'Pizza House Special').trim().slice(0, 100);
+    const sanitizedItem = String(itemOrdered || foodItem || 'Pizza House Special').trim().slice(0, 100);
 
     if (!sanitizedName || !sanitizedComment) {
       return NextResponse.json(
-        { error: 'Name and review comment are required' },
+        { success: false, error: 'Name and review comment are required' },
         { status: 400 }
       );
     }
@@ -26,29 +33,22 @@ export async function POST(request: Request) {
     const rawRating = Number(rating);
     const validRating = Number.isFinite(rawRating) ? Math.min(Math.max(Math.round(rawRating), 1), 5) : 5;
 
-    const data = getDBData();
-    if (!data.reviews) {
-      data.reviews = [];
-    }
-
-    const newReview = {
-      id: `rev-${Date.now()}`,
+    const newReview = addReview({
       name: sanitizedName,
       location: sanitizedLocation || 'Quetta',
       rating: validRating,
       comment: sanitizedComment,
       itemOrdered: sanitizedItem || 'Pizza House Special',
-      date: 'Just now',
-      createdAt: new Date().toISOString(),
-    };
+    });
 
-    data.reviews.unshift(newReview);
-    saveDBData(data);
-
-    return NextResponse.json(newReview, { status: 201 });
-  } catch (error) {
+    return NextResponse.json({
+      success: true,
+      review: newReview,
+      ...newReview,
+    }, { status: 201 });
+  } catch (error: any) {
     return NextResponse.json(
-      { error: 'Failed to save review' },
+      { success: false, error: error?.message || 'Failed to save review' },
       { status: 500 }
     );
   }

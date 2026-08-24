@@ -44,14 +44,16 @@ export default function AddReviewModal({ isOpen, onClose, onReviewAdded }: AddRe
           rating,
           comment: comment.trim(),
           foodItem: foodItem.trim() || undefined,
+          itemOrdered: foodItem.trim() || undefined,
           location: location.trim() || 'Quetta',
         }),
       });
 
       const data = await res.json();
-      if (data.success && data.review) {
+      if (res.ok && (data.success || data.id || data.review)) {
+        const createdReview: Review = data.review || data;
         setSubmitted(true);
-        if (onReviewAdded) onReviewAdded(data.review);
+        if (onReviewAdded) onReviewAdded(createdReview);
         setTimeout(() => {
           setSubmitted(false);
           setName('');
@@ -60,7 +62,7 @@ export default function AddReviewModal({ isOpen, onClose, onReviewAdded }: AddRe
           onClose();
         }, 1500);
       } else {
-        setError(data.error || 'Failed to submit review.');
+        setError(data?.error || 'Failed to submit review.');
       }
     } catch (err) {
       setError('Network error. Please try again.');

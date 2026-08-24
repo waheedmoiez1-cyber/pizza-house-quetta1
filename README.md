@@ -1,6 +1,8 @@
 # 🍕 Pizza House Quetta - Fullstack E-Commerce & Admin Web Application
 
-A fullstack Next.js 14+ (App Router), TypeScript, and Tailwind CSS e-commerce website and secret admin portal engineered for **Pizza House Quetta** on Toghi Road.
+A fullstack Next.js 14+ (App Router), TypeScript, Tailwind CSS, and MySQL e-commerce website and secret admin portal engineered for **Pizza House Quetta** on Toghi Road.
+
+👉 **Looking for full step-by-step instructions? Check out the [Complete Setup & Transfer Guide (SETUP_GUIDE.md)](./SETUP_GUIDE.md)**
 
 ---
 
@@ -27,11 +29,35 @@ A fullstack Next.js 14+ (App Router), TypeScript, and Tailwind CSS e-commerce we
 
 ---
 
+## 🐬 MySQL Database Setup (XAMPP / Localhost / Cloud MySQL)
+
+The application connects to a MySQL database with automatic table mapping and resilient fallback.
+
+### 1. Import MySQL Database Schema & Seed Data
+1. Start **Apache** and **MySQL** in **XAMPP Control Panel**.
+2. Open **phpMyAdmin**: [http://localhost/phpmyadmin](http://localhost/phpmyadmin)
+3. Click the **Import** tab.
+4. Select the file [`pizza_house_quetta.sql`](./pizza_house_quetta.sql) and click **Go** / **Import**.
+
+### 2. Configure MySQL in `.env.local`
+Ensure your `.env.local` file contains:
+```env
+USE_MYSQL=true
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=
+MYSQL_DATABASE=pizza_house_quetta
+```
+
+### 3. Check Live Connection Status
+Visit `http://localhost:3000/api/db-status` to test the MySQL connection in real-time.
+
+---
+
 ## 🚀 Quick Start Guide (Transfer & Local Setup)
 
 ### 1. Installation
-Clone or transfer the project directory to any computer or server, then run:
-
 ```bash
 npm install
 ```
@@ -54,7 +80,7 @@ npm run start
 
 - **Admin Login Page**: `http://localhost:3000/admin/login`
 - **Username**: `admin`
-- **Password**: `admin123`
+- **Password**: `Dtan@1234`
 
 ---
 
@@ -64,77 +90,22 @@ npm run start
 pizza-house-quetta/
 ├── app/                      # Next.js App Router (Pages & API Routes)
 │   ├── admin/                # Admin Panel (Orders, Menu, Categories, Settings)
-│   ├── api/                  # RESTful API routes (menu, orders, reviews, settings)
+│   ├── api/                  # RESTful API routes (menu, orders, reviews, settings, db-status)
 │   ├── cart/                 # Shopping Cart Page
 │   ├── checkout/             # Checkout Page with COD / JazzCash / Card options
 │   ├── menu/                 # Dedicated Full Menu Page
 │   └── page.tsx              # Homepage
 ├── components/               # UI Components (Hero, Navbar, ProductCard, Modals)
 ├── data/
-│   └── db.json               # Self-contained JSON database (items, orders, reviews, settings)
+│   └── db.json               # Self-contained JSON database fallback
 ├── lib/
-│   ├── db.ts                 # Database helper functions
+│   ├── db.ts                 # Unified database layer (MySQL + KV + JSON fallback)
+│   ├── mysql.ts              # MySQL connection pool & SQL query helpers
 │   ├── types.ts              # TypeScript interfaces
 │   └── cart-store.ts         # Zustand cart state management
 ├── public/
-│   └── images/               # High-res AI food photography
+│   └── images/               # High-res food photography
+├── pizza_house_quetta.sql    # Complete MySQL Database Dump & Schema
 ├── next.config.ts            # Next.js config (standalone output enabled)
-└── README.md                 # Project Transferability & Deployment Guide
+└── README.md                 # Project Setup & Deployment Guide
 ```
-
----
-
-## ☁️ Vercel Deployment & Backend Setup Guide
-
-### Why Serverless requires special configuration:
-Vercel executes Next.js API routes as stateless serverless functions with a read-only filesystem (`EROFS`). This project has been upgraded with:
-1. **Direct JSON seed bundling**: Seed database (16 menu items, 5 categories, reviews, and settings) is compiled directly into the Next.js bundle, so public pages and API routes **never fail to load**.
-2. **Serverless-Safe Memory & `/tmp` caching**: API routes gracefully handle write actions without crashing.
-3. **1-Click Free Cloud Database (Upstash Redis / Vercel KV)**: For permanent cross-device persistence across serverless cold starts.
-
----
-
-### Step 1: Push Code & Deploy to Vercel
-1. Commit and push the updated project to your GitHub repository:
-   ```bash
-   git add .
-   git commit -m "Fix Vercel serverless backend and admin persistence"
-   git push origin main
-   ```
-2. In your [Vercel Dashboard](https://vercel.com/dashboard), import your repository and click **Deploy**.
-
----
-
-### Step 2: Configure Environment Variables in Vercel
-Go to **Vercel Dashboard → Your Project → Settings → Environment Variables**, and add the following:
-
-| Key | Value | Notes |
-| :--- | :--- | :--- |
-| `ADMIN_USERNAME` | `admin` | Your desired admin username |
-| `ADMIN_PASSWORD` | `Dtan@1234` | Your desired admin password |
-| `NEXT_PUBLIC_SITE_URL` | `https://your-project.vercel.app` | Your live Vercel domain |
-
----
-
-### Step 3: (Recommended) Add Free Upstash Redis / Vercel KV for Permanent Cloud Persistence
-To ensure customer orders, menu edits, and store settings are permanently stored across all devices and serverless restarts:
-1. In your **Vercel Project Dashboard**, navigate to the **Storage** tab.
-2. Click **Create Database** and choose **KV** (or **Upstash Redis** from Marketplace - 100% Free).
-3. Connect the database to your project. Vercel will automatically configure:
-   - `KV_REST_API_URL`
-   - `KV_REST_API_TOKEN`
-4. Redeploy your project (or push a new commit). The app will automatically sync with the cloud database!
-
----
-
-### Step 4: Accessing the Admin Portal
-- **Admin Portal URL**: `https://your-project.vercel.app/admin/login` (or `/admin`)
-- **Username**: `admin` (or the one you set in `ADMIN_USERNAME`)
-- **Password**: `Dtan@1234` (or the one you set in `ADMIN_PASSWORD`)
-- From the admin portal, you can:
-  - 📊 Monitor live orders in real time.
-  - 🍕 Add new food items, edit prices, toggle stock (`In Stock` / `Out of Stock`).
-  - 📁 Manage categories.
-  - ⚙️ Update store hours, contact number, delivery fees, and announcement banners.
-  - 🖨️ Print Kitchen Order Tickets (KOT) & send WhatsApp updates to customers.
-

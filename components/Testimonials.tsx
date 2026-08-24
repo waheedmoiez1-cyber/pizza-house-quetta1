@@ -25,9 +25,15 @@ export default function Testimonials() {
       const res = await fetch('/api/reviews');
       if (res.ok) {
         const data = await res.json();
-        setReviews(data);
+        if (Array.isArray(data)) {
+          setReviews(data);
+        } else if (data && Array.isArray(data.reviews)) {
+          setReviews(data.reviews);
+        }
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error('Error fetching reviews:', err);
+    }
   };
 
   useEffect(() => {
@@ -156,7 +162,7 @@ export default function Testimonials() {
         isOpen={isAddReviewOpen}
         onClose={() => setIsAddReviewOpen(false)}
         onReviewAdded={(newRev) => {
-          setReviews([newRev, ...reviews]);
+          setReviews((prev) => [newRev, ...prev.filter((r) => r.id !== newRev.id)]);
         }}
       />
     </section>

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDBDataAsync, saveDBDataAsync, getOrderById, verifyAdminSessionCookie } from '@/lib/db';
+import { getDBDataAsync, saveDBDataAsync, getOrderById, updateOrderStatus, deleteOrder, verifyAdminSessionCookie } from '@/lib/db';
 import { Order } from '@/lib/types';
 
 export async function GET(
@@ -76,18 +76,14 @@ export async function PATCH(
     }
 
     if (body.orderStatus) {
-      data.orders[orderIndex].orderStatus = body.orderStatus;
-      data.orders[orderIndex].status = body.orderStatus;
-      if (body.orderStatus === 'Delivered') {
-        data.orders[orderIndex].paymentStatus = 'paid';
+      updateOrderStatus(id, body.orderStatus);
+    } else {
+      data.orders[orderIndex].updatedAt = new Date().toISOString();
+      if (body.paymentStatus) {
+        data.orders[orderIndex].paymentStatus = body.paymentStatus;
       }
+      await saveDBDataAsync(data);
     }
-    if (body.paymentStatus) {
-      data.orders[orderIndex].paymentStatus = body.paymentStatus;
-    }
-
-    data.orders[orderIndex].updatedAt = new Date().toISOString();
-    await saveDBDataAsync(data);
 
     return NextResponse.json({ success: true, order: data.orders[orderIndex] });
   } catch (error: any) {
@@ -106,19 +102,13 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const data = await getDBDataAsync();
+    const success = deleteOrder(id);
 
-    if (!Array.isArray(data.orders)) data.orders = [];
-    const orderIndex = data.orders.findIndex((o: Order) => o.id === id || o.orderNumber === id);
-
-    if (orderIndex === -1) {
+    if (!success) {
       return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
     }
 
-    const deletedOrder = data.orders.splice(orderIndex, 1)[0];
-    await saveDBDataAsync(data);
-
-    return NextResponse.json({ success: true, deletedOrder });
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error?.message || 'Failed to delete order' }, { status: 500 });
   }

@@ -755,6 +755,98 @@
   ],
   "orders": [
     {
+      "customerName": "moiez",
+      "customerPhone": "03337838396",
+      "phone": "03337838396",
+      "customerEmail": "waheedmoiez1@gmail.com",
+      "orderType": "delivery",
+      "deliveryOption": "delivery",
+      "address": "Quetta",
+      "landmark": "",
+      "paymentMethod": "Cash on Delivery",
+      "paymentStatus": "pending",
+      "subtotal": 2630,
+      "tax": 0,
+      "deliveryFee": 0,
+      "discount": 0,
+      "total": 2630,
+      "items": [
+        {
+          "id": "p-1",
+          "name": "Chicken Tikka Pizza",
+          "price": 1805,
+          "quantity": 1,
+          "selectedSize": "Jumbo 15\"",
+          "selectedAddOns": [
+            "Crust: Cheese Burst Stuffed Rim"
+          ],
+          "totalPrice": 1805,
+          "image": "/images/tikka_pizza.jpg"
+        },
+        {
+          "id": "p-9",
+          "name": "Special Stuff Pizza",
+          "price": 825,
+          "quantity": 1,
+          "selectedAddOns": [],
+          "totalPrice": 825,
+          "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=800&auto=format&fit=crop"
+        }
+      ],
+      "notes": "",
+      "id": "ord-1787595318649",
+      "orderNumber": "PHQ-1017",
+      "orderStatus": "Pending",
+      "status": "Pending",
+      "createdAt": "2026-08-24T18:15:18.649Z"
+    },
+    {
+      "customerName": "moiez waheed",
+      "customerPhone": "03337838396",
+      "customerEmail": "waheedmoiez1@gmail.com",
+      "orderType": "delivery",
+      "address": "Toghi Road, ",
+      "landmark": "",
+      "paymentMethod": "cod",
+      "paymentStatus": "paid",
+      "subtotal": 2055,
+      "tax": 308.25,
+      "deliveryFee": 0,
+      "discount": 0,
+      "total": 2363.25,
+      "items": [
+        {
+          "id": "p-2",
+          "name": "Chicken Fajita Pizza",
+          "price": 835,
+          "quantity": 2,
+          "selectedSize": "Small 9\"",
+          "selectedAddOns": [
+            "Extra Mozzarella Cheese",
+            "Signature Garlic Mayo Dip"
+          ],
+          "totalPrice": 1670,
+          "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?q=80&w=800&auto=format&fit=crop"
+        },
+        {
+          "id": "b-3",
+          "name": "Zinger Burger",
+          "price": 385,
+          "quantity": 1,
+          "selectedAddOns": [],
+          "totalPrice": 385,
+          "image": "/images/zinger_burger.jpg"
+        }
+      ],
+      "notes": "",
+      "id": "ord-1787583367858",
+      "orderNumber": "PHQ-1009",
+      "orderStatus": "Delivered",
+      "createdAt": "2026-08-24T14:56:07.858Z",
+      "status": "Delivered",
+      "updatedAt": "2026-08-24T15:00:35.890Z"
+    },
+    {
       "customerName": "warda baloch bukhari ",
       "customerPhone": "0333789865",
       "customerEmail": "waheedmoiez1@gmail.com",
@@ -1005,6 +1097,16 @@
     }
   ],
   "reviews": [
+    {
+      "id": "rev-1787596156222",
+      "name": "mo",
+      "location": "mo",
+      "rating": 5,
+      "comment": "ff",
+      "itemOrdered": "Pizza House Special",
+      "date": "Just now",
+      "createdAt": "2026-08-24T18:29:16.222Z"
+    },
     {
       "id": "rev-1786489298265",
       "name": "Moiez",
