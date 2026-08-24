@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
-import { Search, MapPin, Phone, Package, Clock, CheckCircle2, Truck, CookingPot, MessageCircle, AlertCircle, ArrowLeft, RefreshCw, Sparkles } from 'lucide-react';
+import { Search, MapPin, Phone, Package, Clock, CheckCircle2, Truck, CookingPot, MessageCircle, AlertCircle, ArrowLeft, RefreshCw, Sparkles, Printer } from 'lucide-react';
 import { Order, OrderStatus } from '@/lib/types';
 
 const timelineContainerVariants: Variants = {
@@ -40,6 +40,7 @@ function OrderTrackerContent() {
   const [searchedOrder, setSearchedOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [isPrinting, setIsPrinting] = useState(false);
 
   useEffect(() => {
     if (queryOrder) {
@@ -78,6 +79,16 @@ function OrderTrackerContent() {
     }
   };
 
+  const handlePrintReceipt = () => {
+    setIsPrinting(true);
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        window.print();
+        setIsPrinting(false);
+      }, 50);
+    });
+  };
+
   // Step Status Timeline Configuration
   const getStepProgress = (status: OrderStatus) => {
     switch (status) {
@@ -104,15 +115,133 @@ function OrderTrackerContent() {
   ];
 
   const currentStep = searchedOrder ? getStepProgress(searchedOrder.orderStatus || searchedOrder.status) : 0;
+  const orderNo = searchedOrder ? (searchedOrder.orderNumber || searchedOrder.id) : '';
+  const deliveryType = searchedOrder ? (searchedOrder.deliveryOption || searchedOrder.orderType || 'delivery') : 'delivery';
+  const customerPhone = searchedOrder ? (searchedOrder.customerPhone || searchedOrder.phone || 'N/A') : '';
+  const customerAddress = searchedOrder ? (searchedOrder.address || 'Store Pickup (Toghi Road Quetta)') : '';
 
   return (
     <div className="py-12 max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12">
-      {/* Header Title */}
+      {/* Hidden Thermal Printable Receipt for window.print() */}
+      {searchedOrder && (
+        <div id="printable-customer-receipt" className="hidden print:block font-mono space-y-3 text-black">
+          <div className="text-center border-b-2 border-dashed border-black pb-3">
+            <h1 className="text-2xl font-black uppercase tracking-widest leading-none mb-1">PIZZA HOUSE QUETTA</h1>
+            <p className="text-[11px] font-bold text-gray-800">Quetta&apos;s Favorite Slice Since Day One</p>
+            <p className="text-[10px] text-gray-700 leading-tight">Toghi Road, Quetta, Balochistan, Pakistan</p>
+            <p className="text-[10px] font-bold">Hotline: 0300-1234567 • Phone: 081-2820000</p>
+            <p className="text-[9px] text-gray-600 mt-1">NTN: 8294102-3 • PRA/STRN: 19-00-8294-102</p>
+            <div className="mt-2 py-1 px-3 bg-black text-white rounded font-black text-xs uppercase tracking-widest inline-block">
+              *** SALES TAX INVOICE ***
+            </div>
+          </div>
+
+          <div className="text-xs space-y-1 bg-gray-100 p-2.5 rounded border border-gray-300">
+            <div className="flex justify-between">
+              <span className="font-bold">INVOICE NO:</span>
+              <span className="font-bold">INV-{new Date(searchedOrder.createdAt).getFullYear()}-{orderNo.replace(/^PHQ-?/, '')}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-bold">ORDER REF:</span>
+              <span className="font-black">#{orderNo}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-bold">DATE & TIME:</span>
+              <span>{new Date(searchedOrder.createdAt).toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-bold">ORDER TYPE:</span>
+              <span className="font-bold uppercase">{deliveryType}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-bold">CUSTOMER:</span>
+              <span>{searchedOrder.customerName} ({customerPhone})</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-bold">DELIVERY:</span>
+              <span className="font-semibold text-right max-w-[210px]">{customerAddress}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-bold">PAYMENT:</span>
+              <span className="font-bold uppercase">{searchedOrder.paymentMethod}</span>
+            </div>
+          </div>
+
+          <div>
+            <div className="text-xs font-bold uppercase border-b-2 border-black pb-1 flex justify-between">
+              <span>QTY & ITEM DETAILS</span>
+              <span>AMOUNT (PKR)</span>
+            </div>
+            <div className="divide-y divide-dashed divide-gray-300">
+              {searchedOrder.items.map((item: any, idx) => {
+                const itemName = item.item?.name || item.name || 'Food Item';
+                const sizeName = typeof item.selectedSize === 'object' ? item.selectedSize?.name : (item.selectedSize || item.size || '');
+                const price = item.unitPrice || item.price || 0;
+                const qty = item.quantity || 1;
+                const total = item.totalPrice || (price * qty);
+
+                return (
+                  <div key={idx} className="py-1.5 flex justify-between text-xs">
+                    <div>
+                      <span className="font-bold">[{qty}x] {itemName}</span>
+                      {sizeName && <span className="text-[10px] block text-gray-700 pl-4">• Size: {sizeName}</span>}
+                      {item.selectedAddOns && item.selectedAddOns.length > 0 && (
+                        <span className="text-[9px] block text-gray-600 pl-4">
+                          + {Array.isArray(item.selectedAddOns) ? item.selectedAddOns.map((a: any) => typeof a === 'object' ? a.name : a).join(', ') : ''}
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-bold">Rs. {total.toLocaleString('en-PK')}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="space-y-1 text-xs pt-2 border-t-2 border-dashed border-black">
+            <div className="flex justify-between">
+              <span>Gross Subtotal:</span>
+              <span>Rs. {(searchedOrder.subtotal || searchedOrder.total).toLocaleString('en-PK')}</span>
+            </div>
+            {searchedOrder.discount ? (
+              <div className="flex justify-between font-bold">
+                <span>Promo Discount:</span>
+                <span>-Rs. {searchedOrder.discount.toLocaleString('en-PK')}</span>
+              </div>
+            ) : null}
+            {searchedOrder.tax ? (
+              <div className="flex justify-between">
+                <span>GST / Tax (15%):</span>
+                <span>Rs. {searchedOrder.tax.toLocaleString('en-PK')}</span>
+              </div>
+            ) : null}
+            {searchedOrder.deliveryFee ? (
+              <div className="flex justify-between">
+                <span>Delivery Fee:</span>
+                <span>Rs. {searchedOrder.deliveryFee.toLocaleString('en-PK')}</span>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="pt-2 pb-1 border-y-2 border-black flex justify-between items-center text-sm font-black">
+            <span>NET PAYABLE:</span>
+            <span>Rs. {searchedOrder.total.toLocaleString('en-PK')}</span>
+          </div>
+
+          <div className="text-center pt-2 border-t border-dashed border-gray-400 text-[9px] text-gray-700 space-y-1">
+            <p className="font-bold text-[10px]">*** FBR / PRA POS DIGITAL VERIFIED ***</p>
+            <p>Scan & verify live order status at: pizza-house-quetta.com/track?id={orderNo}</p>
+            <p>Thank you for dining with Pizza House Quetta! 100% Halal</p>
+          </div>
+        </div>
+      )}
+
+      {/* Header Title (Hidden on print) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-center max-w-2xl mx-auto mb-10"
+        className="text-center max-w-2xl mx-auto mb-10 print:hidden"
       >
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#C8102E]/15 text-[#C8102E] text-xs font-bold uppercase tracking-wider mb-4 border border-red-500/30">
           <Truck className="w-4 h-4 text-[#F4B93B]" />
@@ -122,16 +251,16 @@ function OrderTrackerContent() {
           Track Your <span className="text-[#F4B93B]">Hot Order</span>
         </h1>
         <p className="mt-2 text-[var(--color-text-secondary)] text-sm sm:text-base">
-          Enter your Order # (e.g. <strong className="text-[var(--color-text-primary)]">PHQ-84920</strong>) or Phone Number below to track live kitchen preparation & rider delivery status!
+          Enter your Order # (e.g. <strong className="text-[var(--color-text-primary)]">PHQ-1008</strong>) or Phone Number below to track live kitchen preparation & rider delivery status!
         </p>
       </motion.div>
 
-      {/* Search Bar Form */}
+      {/* Search Bar Form (Hidden on print) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="glass-panel p-4 sm:p-6 rounded-3xl border border-[var(--color-border)] shadow-2xl max-w-2xl mx-auto mb-12"
+        className="glass-panel p-4 sm:p-6 rounded-3xl border border-[var(--color-border)] shadow-2xl max-w-2xl mx-auto mb-12 print:hidden"
       >
         <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
@@ -150,7 +279,7 @@ function OrderTrackerContent() {
             whileTap={{ scale: 0.95 }}
             type="submit"
             disabled={loading}
-            className="px-8 py-4 min-h-[44px] rounded-2xl bg-gradient-to-r from-[#C8102E] to-[#A00B23] hover:from-[#E52E4D] hover:to-[#C8102E] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-red-600/30 flex items-center justify-center gap-2 transition-all shrink-0 border border-red-500/30"
+            className="px-8 py-4 min-h-[44px] rounded-2xl bg-gradient-to-r from-[#C8102E] to-[#A00B23] hover:from-[#E52E4D] hover:to-[#C8102E] text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-red-600/30 flex items-center justify-center gap-2 transition-all shrink-0 border border-red-500/30 cursor-pointer"
           >
             {loading ? (
               <RefreshCw className="w-5 h-5 animate-spin text-white" />
@@ -175,7 +304,7 @@ function OrderTrackerContent() {
                 router.push(`/track?id=${encodeURIComponent(sampleId)}`);
                 handleFetchOrder(sampleId);
               }}
-              className="px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 hover:bg-[#F4B93B]/20 hover:text-[#F4B93B] text-[11px] font-bold border border-[var(--color-border)] transition-all"
+              className="px-2.5 py-1 rounded-full bg-black/5 dark:bg-white/10 hover:bg-[#F4B93B]/20 hover:text-[#F4B93B] text-[11px] font-bold border border-[var(--color-border)] transition-all cursor-pointer"
             >
               #{sampleId}
             </button>
@@ -202,7 +331,7 @@ function OrderTrackerContent() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ type: 'spring', damping: 25, stiffness: 280 }}
-            className="glass-card rounded-3xl p-6 sm:p-10 border border-[var(--color-border)] shadow-2xl space-y-8"
+            className="glass-card rounded-3xl p-6 sm:p-10 border border-[var(--color-border)] shadow-2xl space-y-8 print:hidden"
           >
             {/* Order Header Summary */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[var(--color-border)]">
@@ -210,7 +339,7 @@ function OrderTrackerContent() {
                 <div className="flex items-center gap-2.5 mb-1">
                   <span className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider">Order ID</span>
                   <span className="text-sm font-extrabold text-[#F4B93B] bg-[#F4B93B]/10 px-3 py-0.5 rounded-full border border-[#F4B93B]/20">
-                    {searchedOrder.id}
+                    {orderNo}
                   </span>
                   <span className="text-xs text-[var(--color-text-muted)]">
                     • {new Date(searchedOrder.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -221,12 +350,25 @@ function OrderTrackerContent() {
                 </h3>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {/* Print Receipt CTA */}
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handlePrintReceipt}
+                  disabled={isPrinting}
+                  className="px-4 py-2.5 min-h-[44px] rounded-xl bg-black/10 dark:bg-white/10 hover:bg-black/20 dark:hover:bg-white/20 text-[var(--color-text-primary)] text-xs font-bold transition-all border border-[var(--color-border)] flex items-center gap-2 cursor-pointer shadow-sm"
+                  title="Print Official Receipt / Tax Invoice"
+                >
+                  <Printer className="w-3.5 h-3.5 text-[#F4B93B]" />
+                  <span>{isPrinting ? 'Printing...' : 'Print Receipt'}</span>
+                </motion.button>
+
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleFetchOrder(searchedOrder.id)}
-                  className="px-4 py-2.5 min-h-[44px] rounded-xl bg-white/5 hover:bg-white/10 text-[var(--color-text-primary)] text-xs font-bold transition-all border border-[var(--color-border)] flex items-center gap-2"
+                  className="px-4 py-2.5 min-h-[44px] rounded-xl bg-white/5 hover:bg-white/10 text-[var(--color-text-primary)] text-xs font-bold transition-all border border-[var(--color-border)] flex items-center gap-2 cursor-pointer"
                   title="Refresh Status"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -236,7 +378,7 @@ function OrderTrackerContent() {
                 <motion.a
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  href={`https://wa.me/923001234567?text=${encodeURIComponent(`Hi Pizza House Quetta! Inquiring about order status for #${searchedOrder.id}`)}`}
+                  href={`https://wa.me/923001234567?text=${encodeURIComponent(`Hi Pizza House Quetta! Inquiring about order status for #${orderNo}`)}`}
                   target="_blank"
                   rel="noreferrer"
                   className="px-4 py-2.5 min-h-[44px] rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/30"
@@ -332,10 +474,10 @@ function OrderTrackerContent() {
                     <span className="text-[var(--color-text-muted)]">Customer:</span> {searchedOrder.customerName}
                   </p>
                   <p className="flex items-center gap-2 text-[var(--color-text-primary)] font-semibold">
-                    <Phone className="w-3.5 h-3.5 text-[#F4B93B]" /> {searchedOrder.phone || searchedOrder.customerPhone}
+                    <Phone className="w-3.5 h-3.5 text-[#F4B93B]" /> {customerPhone}
                   </p>
                   <p className="flex items-start gap-2 text-[var(--color-text-secondary)] leading-relaxed">
-                    <MapPin className="w-3.5 h-3.5 text-[#C8102E] shrink-0 mt-0.5" /> {searchedOrder.address}
+                    <MapPin className="w-3.5 h-3.5 text-[#C8102E] shrink-0 mt-0.5" /> {customerAddress}
                   </p>
                 </div>
               </div>
@@ -379,7 +521,7 @@ function OrderTrackerContent() {
       </AnimatePresence>
 
       {/* Back to Home Action */}
-      <div className="text-center mt-12">
+      <div className="text-center mt-12 print:hidden">
         <Link
           href="/"
           className="inline-flex items-center gap-2 px-6 py-3 min-h-[44px] rounded-full bg-white/5 hover:bg-white/10 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] text-xs font-bold transition-colors border border-[var(--color-border)] hover:scale-105"

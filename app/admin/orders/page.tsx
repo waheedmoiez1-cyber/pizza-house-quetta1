@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { ShoppingBag, Clock, ChefHat, Truck, Home, CheckCircle2, Phone, MapPin, AlertCircle, RefreshCw, Printer, Edit, Trash2, MessageSquare, Search, XCircle } from 'lucide-react';
+import { ShoppingBag, Clock, ChefHat, Truck, Home, CheckCircle2, Phone, MapPin, AlertCircle, RefreshCw, Printer, Edit, Trash2, MessageSquare, Search, XCircle, Receipt } from 'lucide-react';
 import { Order, OrderStatus } from '@/lib/types';
 import EditOrderModal from '@/components/EditOrderModal';
 import KitchenTicketModal from '@/components/KitchenTicketModal';
+import PosInvoiceModal from '@/components/PosInvoiceModal';
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -15,6 +16,7 @@ export default function AdminOrdersPage() {
   // Modal States
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [kitchenOrder, setKitchenOrder] = useState<Order | null>(null);
+  const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     fetchOrders();
@@ -138,13 +140,13 @@ export default function AdminOrdersPage() {
             <span className="w-3 h-3 rounded-full bg-green-500 animate-ping" title="Live Server Sync Active" />
           </h1>
           <p className="text-xs text-white/60 mt-1">
-            Real-time customer orders, Kitchen Slip printing, order management & WhatsApp notifications.
+            Real-time customer orders, POS Tax Invoice printing, Kitchen Slip (KOT) production & WhatsApp alerts.
           </p>
         </div>
 
         <button
           onClick={fetchOrders}
-          className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center justify-center gap-2 border border-white/10 transition-colors shrink-0"
+          className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs flex items-center justify-center gap-2 border border-white/10 transition-colors shrink-0 cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5" />
           <span>Sync Orders Now</span>
@@ -186,7 +188,7 @@ export default function AdminOrdersPage() {
               <button
                 key={status}
                 onClick={() => setSelectedStatus(status)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shrink-0 cursor-pointer ${
                   isActive
                     ? 'bg-[#C8102E] text-white shadow-lg shadow-red-600/30'
                     : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
@@ -253,7 +255,7 @@ export default function AdminOrdersPage() {
                       {/* Edit Order */}
                       <button
                         onClick={() => setEditingOrder(order)}
-                        className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors border border-white/10"
+                        className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors border border-white/10 cursor-pointer"
                         title="Edit Order"
                       >
                         <Edit className="w-4 h-4" />
@@ -262,7 +264,7 @@ export default function AdminOrdersPage() {
                       {/* Delete Order */}
                       <button
                         onClick={() => handleDeleteOrder(order.id, orderNo)}
-                        className="p-2 rounded-xl bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white transition-colors border border-red-500/30"
+                        className="p-2 rounded-xl bg-red-600/20 hover:bg-red-600 text-red-300 hover:text-white transition-colors border border-red-500/30 cursor-pointer"
                         title="Delete Order"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -314,16 +316,27 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
 
-                {/* Kitchen & WhatsApp Actions */}
+                {/* Kitchen, Invoice & WhatsApp Actions */}
                 <div className="space-y-3 pt-4 border-t border-white/10">
-                  <div className="grid grid-cols-2 gap-2">
-                    {/* Print Kitchen Slip */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {/* Print Kitchen Slip (KOT) */}
                     <button
                       onClick={() => setKitchenOrder(order)}
-                      className="py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 border border-amber-500/30 transition-all shadow-md"
+                      className="py-2.5 px-2 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-black font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 border border-amber-500/30 transition-all shadow-md cursor-pointer"
+                      title="Print Kitchen Slip (KOT)"
                     >
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>Kitchen Slip</span>
+                      <Printer className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">Kitchen Slip</span>
+                    </button>
+
+                    {/* Print Customer POS Tax Invoice */}
+                    <button
+                      onClick={() => setInvoiceOrder(order)}
+                      className="py-2.5 px-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 border border-white/10 transition-all shadow-md cursor-pointer"
+                      title="Print Official Customer POS Tax Invoice"
+                    >
+                      <Receipt className="w-3.5 h-3.5 text-[#F4B93B] shrink-0" />
+                      <span className="truncate">POS Invoice</span>
                     </button>
 
                     {/* Send WhatsApp Status Alert */}
@@ -331,10 +344,11 @@ export default function AdminOrdersPage() {
                       href={getCustomerWhatsAppUrl(order)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="py-2.5 px-3 rounded-xl bg-green-600/20 hover:bg-green-600 text-green-300 hover:text-white font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 border border-green-500/30 transition-all shadow-md"
+                      className="py-2.5 px-2 rounded-xl bg-green-600/20 hover:bg-green-600 text-green-300 hover:text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1 border border-green-500/30 transition-all shadow-md"
+                      title="Send WhatsApp Update"
                     >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      <span>WhatsApp Alert</span>
+                      <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate">WhatsApp</span>
                     </a>
                   </div>
 
@@ -346,7 +360,7 @@ export default function AdminOrdersPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
                       <button
                         onClick={() => handleUpdateStatus(order.id, 'Pending')}
-                        className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all border ${
+                        className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all border cursor-pointer ${
                           currentStatus === 'Pending'
                             ? 'bg-[#F4B93B] text-[#1A1A1A] border-[#F4B93B]'
                             : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10'
@@ -357,7 +371,7 @@ export default function AdminOrdersPage() {
 
                       <button
                         onClick={() => handleUpdateStatus(order.id, 'Preparing')}
-                        className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all border ${
+                        className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all border cursor-pointer ${
                           currentStatus === 'Preparing'
                             ? 'bg-blue-600 text-white border-blue-500'
                             : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10'
@@ -368,7 +382,7 @@ export default function AdminOrdersPage() {
 
                       <button
                         onClick={() => handleUpdateStatus(order.id, 'Out for Delivery')}
-                        className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all border ${
+                        className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all border cursor-pointer ${
                           currentStatus === 'Out for Delivery'
                             ? 'bg-purple-600 text-white border-purple-500'
                             : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10'
@@ -379,7 +393,7 @@ export default function AdminOrdersPage() {
 
                       <button
                         onClick={() => handleUpdateStatus(order.id, 'Delivered')}
-                        className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all border ${
+                        className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all border cursor-pointer ${
                           currentStatus === 'Delivered'
                             ? 'bg-green-600 text-white border-green-500'
                             : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10'
@@ -390,7 +404,7 @@ export default function AdminOrdersPage() {
 
                       <button
                         onClick={() => handleUpdateStatus(order.id, 'Cancelled')}
-                        className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all border ${
+                        className={`px-2 py-2 rounded-xl text-[10px] font-bold transition-all border cursor-pointer ${
                           currentStatus === 'Cancelled'
                             ? 'bg-red-600 text-white border-red-500'
                             : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10'
@@ -415,11 +429,20 @@ export default function AdminOrdersPage() {
         onOrderUpdated={fetchOrders}
       />
 
-      {/* Kitchen Ticket Modal */}
+      {/* Kitchen Ticket Modal (KOT) */}
       <KitchenTicketModal
         order={kitchenOrder}
         isOpen={Boolean(kitchenOrder)}
         onClose={() => setKitchenOrder(null)}
+        initialMode="kot"
+        onStatusUpdate={handleUpdateStatus}
+      />
+
+      {/* Dedicated Commercial POS Customer Invoice Modal */}
+      <PosInvoiceModal
+        order={invoiceOrder}
+        isOpen={Boolean(invoiceOrder)}
+        onClose={() => setInvoiceOrder(null)}
       />
     </div>
   );

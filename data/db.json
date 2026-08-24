@@ -755,6 +755,75 @@
   ],
   "orders": [
     {
+      "customerName": "test",
+      "customerPhone": "031313131311",
+      "phone": "031313131311",
+      "customerEmail": "waheedmoiez1@gmail.com",
+      "orderType": "delivery",
+      "deliveryOption": "delivery",
+      "address": "Quetta",
+      "landmark": "",
+      "paymentMethod": "Cash on Delivery",
+      "paymentStatus": "paid",
+      "subtotal": 1505,
+      "tax": 0,
+      "deliveryFee": 0,
+      "discount": 0,
+      "total": 1505,
+      "items": [
+        {
+          "id": "p-1",
+          "name": "Chicken Tikka Pizza",
+          "price": 1505,
+          "quantity": 1,
+          "selectedSize": "Jumbo 15\"",
+          "selectedAddOns": [],
+          "totalPrice": 1505,
+          "image": "/images/tikka_pizza.jpg"
+        }
+      ],
+      "notes": "",
+      "id": "ord-1787611051271",
+      "orderNumber": "PHQ-1019",
+      "orderStatus": "Delivered",
+      "status": "Delivered",
+      "createdAt": "2026-08-24T22:37:31.271Z"
+    },
+    {
+      "customerName": "test",
+      "customerPhone": "0",
+      "phone": "0",
+      "customerEmail": "test@gna.com",
+      "orderType": "delivery",
+      "deliveryOption": "delivery",
+      "address": "Quetta",
+      "landmark": "",
+      "paymentMethod": "Cash on Delivery",
+      "paymentStatus": "pending",
+      "subtotal": 605,
+      "tax": 0,
+      "deliveryFee": 150,
+      "discount": 0,
+      "total": 755,
+      "items": [
+        {
+          "id": "p-1",
+          "name": "Chicken Tikka Pizza",
+          "price": 605,
+          "quantity": 1,
+          "selectedAddOns": [],
+          "totalPrice": 605,
+          "image": "/images/tikka_pizza.jpg"
+        }
+      ],
+      "notes": "",
+      "id": "ord-1787610512887",
+      "orderNumber": "PHQ-1018",
+      "orderStatus": "Pending",
+      "status": "Pending",
+      "createdAt": "2026-08-24T22:28:32.887Z"
+    },
+    {
       "customerName": "moiez",
       "customerPhone": "03337838396",
       "phone": "03337838396",
