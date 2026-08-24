@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getDBData, saveDBData, getOrderById, verifyAdminSessionCookie } from '@/lib/db';
+import { getDBDataAsync, saveDBDataAsync, getOrderById, verifyAdminSessionCookie } from '@/lib/db';
 import { Order } from '@/lib/types';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await getDBDataAsync();
   const { id } = await params;
   const decodedId = decodeURIComponent(id || '');
   const order = getOrderById(decodedId);
@@ -29,8 +30,9 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const data = getDBData();
+    const data = await getDBDataAsync();
 
+    if (!Array.isArray(data.orders)) data.orders = [];
     const orderIndex = data.orders.findIndex((o: Order) => o.id === id || o.orderNumber === id);
 
     if (orderIndex === -1) {
@@ -44,11 +46,11 @@ export async function PUT(
     };
 
     data.orders[orderIndex] = updatedOrder;
-    saveDBData(data);
+    await saveDBDataAsync(data);
 
     return NextResponse.json({ success: true, order: updatedOrder });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error?.message || 'Failed to update order' }, { status: 500 });
   }
 }
 
@@ -64,8 +66,9 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const data = getDBData();
+    const data = await getDBDataAsync();
 
+    if (!Array.isArray(data.orders)) data.orders = [];
     const orderIndex = data.orders.findIndex((o: Order) => o.id === id || o.orderNumber === id);
 
     if (orderIndex === -1) {
@@ -84,11 +87,11 @@ export async function PATCH(
     }
 
     data.orders[orderIndex].updatedAt = new Date().toISOString();
-    saveDBData(data);
+    await saveDBDataAsync(data);
 
     return NextResponse.json({ success: true, order: data.orders[orderIndex] });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error?.message || 'Failed to update order' }, { status: 500 });
   }
 }
 
@@ -103,8 +106,9 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const data = getDBData();
+    const data = await getDBDataAsync();
 
+    if (!Array.isArray(data.orders)) data.orders = [];
     const orderIndex = data.orders.findIndex((o: Order) => o.id === id || o.orderNumber === id);
 
     if (orderIndex === -1) {
@@ -112,11 +116,11 @@ export async function DELETE(
     }
 
     const deletedOrder = data.orders.splice(orderIndex, 1)[0];
-    saveDBData(data);
+    await saveDBDataAsync(data);
 
     return NextResponse.json({ success: true, deletedOrder });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return NextResponse.json({ success: false, error: error?.message || 'Failed to delete order' }, { status: 500 });
   }
 }
 

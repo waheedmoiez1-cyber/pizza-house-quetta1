@@ -17,18 +17,34 @@ const KV_REST_API_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_R
 /**
  * Helper to sync data to Upstash Redis / Vercel KV cloud database if configured
  */
-async function syncToCloudKV(data: DBData): Promise<boolean> {
+export async function syncToCloudKV(data: DBData): Promise<boolean> {
   if (!KV_REST_API_URL || !KV_REST_API_TOKEN) return false;
   try {
-    const res = await fetch(`${KV_REST_API_URL.replace(/\/$/, '')}/set/phq_database`, {
+    const baseUrl = KV_REST_API_URL.replace(/\/$/, '');
+    const jsonPayload = JSON.stringify(data);
+
+    // Standard Upstash Redis REST command: POST / with ["SET", "phq_database", jsonString]
+    const res = await fetch(`${baseUrl}/`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${KV_REST_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(JSON.stringify(data)),
+      body: JSON.stringify(['SET', 'phq_database', jsonPayload]),
     });
-    return res.ok;
+
+    if (!res.ok) {
+      // Direct REST fallback: POST /set/phq_database with raw jsonPayload
+      const directRes = await fetch(`${baseUrl}/set/phq_database`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${KV_REST_API_TOKEN}`,
+        },
+        body: jsonPayload,
+      });
+      return directRes.ok;
+    }
+    return true;
   } catch (err) {
     console.error('Error syncing to Cloud KV:', err);
     return false;
@@ -41,7 +57,8 @@ async function syncToCloudKV(data: DBData): Promise<boolean> {
 export async function fetchFromCloudKV(): Promise<DBData | null> {
   if (!KV_REST_API_URL || !KV_REST_API_TOKEN) return null;
   try {
-    const res = await fetch(`${KV_REST_API_URL.replace(/\/$/, '')}/get/phq_database`, {
+    const baseUrl = KV_REST_API_URL.replace(/\/$/, '');
+    const res = await fetch(`${baseUrl}/get/phq_database`, {
       headers: {
         Authorization: `Bearer ${KV_REST_API_TOKEN}`,
       },
@@ -49,8 +66,28 @@ export async function fetchFromCloudKV(): Promise<DBData | null> {
     });
     if (!res.ok) return null;
     const json = await res.json();
-    if (!json.result) return null;
-    const parsed = typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
+    if (!json || json.result === undefined || json.result === null) return null;
+
+    let parsed = json.result;
+    while (typeof parsed === 'string') {
+      try {
+        parsed = JSON.parse(parsed);
+      } catch {
+        break;
+      }
+    }
+
+    if (!parsed || typeof parsed !== 'object') {
+      return null;
+    }
+
+    // Guarantee essential structure
+    if (!Array.isArray(parsed.orders)) parsed.orders = [];
+    if (!Array.isArray(parsed.items)) parsed.items = [];
+    if (!Array.isArray(parsed.categories)) parsed.categories = [];
+    if (!Array.isArray(parsed.reviews)) parsed.reviews = [];
+    if (!parsed.settings) parsed.settings = {} as any;
+
     return parsed as DBData;
   } catch (err) {
     console.error('Error fetching from Cloud KV:', err);
@@ -66,7 +103,11 @@ export async function fetchFromCloudKV(): Promise<DBData | null> {
  * 4. Statically bundled seedData from data/db.json
  */
 export function getDBData(): DBData {
-  if (inMemoryDB) {
+  if (inMemoryDB && typeof inMemoryDB === 'object') {
+    if (!Array.isArray(inMemoryDB.orders)) inMemoryDB.orders = [];
+    if (!Array.isArray(inMemoryDB.items)) inMemoryDB.items = [];
+    if (!Array.isArray(inMemoryDB.categories)) inMemoryDB.categories = [];
+    if (!Array.isArray(inMemoryDB.reviews)) inMemoryDB.reviews = [];
     return inMemoryDB;
   }
 
@@ -75,8 +116,14 @@ export function getDBData(): DBData {
     if (fs.existsSync(LOCAL_DB_PATH)) {
       const fileData = fs.readFileSync(LOCAL_DB_PATH, 'utf-8');
       const parsed = JSON.parse(fileData);
-      inMemoryDB = parsed;
-      return parsed;
+      if (parsed && typeof parsed === 'object') {
+        if (!Array.isArray(parsed.orders)) parsed.orders = [];
+        if (!Array.isArray(parsed.items)) parsed.items = [];
+        if (!Array.isArray(parsed.categories)) parsed.categories = [];
+        if (!Array.isArray(parsed.reviews)) parsed.reviews = [];
+        inMemoryDB = parsed;
+        return parsed;
+      }
     }
   } catch (error) {
     // Silently fall through
@@ -87,8 +134,14 @@ export function getDBData(): DBData {
     if (fs.existsSync(TMP_DB_PATH)) {
       const tmpData = fs.readFileSync(TMP_DB_PATH, 'utf-8');
       const parsed = JSON.parse(tmpData);
-      inMemoryDB = parsed;
-      return parsed;
+      if (parsed && typeof parsed === 'object') {
+        if (!Array.isArray(parsed.orders)) parsed.orders = [];
+        if (!Array.isArray(parsed.items)) parsed.items = [];
+        if (!Array.isArray(parsed.categories)) parsed.categories = [];
+        if (!Array.isArray(parsed.reviews)) parsed.reviews = [];
+        inMemoryDB = parsed;
+        return parsed;
+      }
     }
   } catch (error) {
     // Silently fall through
@@ -117,6 +170,10 @@ export function getDBData(): DBData {
   };
 
   inMemoryDB = JSON.parse(JSON.stringify(initial));
+  if (!Array.isArray(inMemoryDB!.orders)) inMemoryDB!.orders = [];
+  if (!Array.isArray(inMemoryDB!.items)) inMemoryDB!.items = [];
+  if (!Array.isArray(inMemoryDB!.categories)) inMemoryDB!.categories = [];
+  if (!Array.isArray(inMemoryDB!.reviews)) inMemoryDB!.reviews = [];
   return inMemoryDB!;
 }
 
@@ -154,6 +211,12 @@ export async function getDBDataAsync(): Promise<DBData> {
  * 4. Syncs to Cloud KV / Redis if configured
  */
 export function saveDBData(data: DBData): void {
+  if (!data || typeof data !== 'object') return;
+  if (!Array.isArray(data.orders)) data.orders = [];
+  if (!Array.isArray(data.items)) data.items = [];
+  if (!Array.isArray(data.categories)) data.categories = [];
+  if (!Array.isArray(data.reviews)) data.reviews = [];
+
   inMemoryDB = data;
 
   // 1. Try local data/db.json
@@ -176,6 +239,13 @@ export function saveDBData(data: DBData): void {
   // 2. Trigger Cloud KV sync asynchronously if configured
   if (KV_REST_API_URL && KV_REST_API_TOKEN) {
     syncToCloudKV(data).catch((err) => console.error('Background Cloud KV sync failed:', err));
+  }
+}
+
+export async function saveDBDataAsync(data: DBData): Promise<void> {
+  saveDBData(data);
+  if (KV_REST_API_URL && KV_REST_API_TOKEN) {
+    await syncToCloudKV(data);
   }
 }
 
@@ -383,8 +453,8 @@ export function createOrder(
   orderData: Omit<Order, 'id' | 'orderNumber' | 'createdAt' | 'orderStatus'>
 ): Order {
   const db = getDBData();
-  if (!db.orders) db.orders = [];
-  const count = (db.orders?.length || 0) + 1002;
+  if (!Array.isArray(db.orders)) db.orders = [];
+  const count = (db.orders.length || 0) + 1002;
   const orderNumber = `PHQ-${count}`;
   const id = `ord-${Date.now()}`;
   const newOrder: Order = {
@@ -392,11 +462,22 @@ export function createOrder(
     id,
     orderNumber,
     orderStatus: 'Pending',
+    status: 'Pending',
     createdAt: new Date().toISOString(),
   };
   db.orders.unshift(newOrder);
   saveDBData(db);
   return newOrder;
+}
+
+export async function createOrderAsync(
+  orderData: Omit<Order, 'id' | 'orderNumber' | 'createdAt' | 'orderStatus'>
+): Promise<Order> {
+  await getDBDataAsync();
+  const order = createOrder(orderData);
+  const db = getDBData();
+  await saveDBDataAsync(db);
+  return order;
 }
 
 export function updateOrderStatus(id: string, status: Order['orderStatus']): Order | null {
