@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Printer, X, CookingPot, MessageSquare, Receipt } from 'lucide-react';
-import { Order } from '@/lib/types';
+import { Order, OrderStatus } from '@/lib/types';
 
 interface KitchenTicketModalProps {
   order: Order | null;
   isOpen: boolean;
   onClose: () => void;
   initialMode?: 'kot' | 'customer';
+  onStatusUpdate?: (orderId: string, newStatus: OrderStatus) => void | Promise<void>;
 }
 
 export default function KitchenTicketModal({
@@ -17,6 +18,7 @@ export default function KitchenTicketModal({
   isOpen,
   onClose,
   initialMode = 'kot',
+  onStatusUpdate,
 }: KitchenTicketModalProps) {
   const [printMode, setPrintMode] = useState<'kot' | 'customer'>(initialMode);
   const [isPrinting, setIsPrinting] = useState(false);

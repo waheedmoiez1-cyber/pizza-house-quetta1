@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { ArrowLeft, Star, Clock, Flame, Plus, Minus, Check, ShoppingBag, Sparkles, AlertCircle } from 'lucide-react';
 import { MenuItem, PizzaSizeOption, AddOnOption } from '@/lib/types';
 import { useCartStore } from '@/lib/cart-store';
 
-export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function ProductDetailPage() {
+  const params = useParams();
+  const id = (params?.id as string) || '';
   const router = useRouter();
 
   const [item, setItem] = useState<MenuItem | null>(null);

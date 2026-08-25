@@ -302,7 +302,7 @@ export default function PosInvoiceModal({ order, isOpen, onClose }: PosInvoiceMo
               <div className="flex justify-between items-center">
                 <span className="font-bold">PAYMENT STATUS:</span>
                 <span className="font-bold text-emerald-700 uppercase">
-                  {order.paymentStatus === 'Paid' ? 'PAID / SETTLED' : 'PENDING ON DELIVERY'}
+                  {(order.paymentStatus as string)?.toLowerCase() === 'paid' || (order.paymentStatus as string)?.toLowerCase() === 'completed' ? 'PAID / SETTLED' : 'PENDING ON DELIVERY'}
                 </span>
               </div>
               {tenderAmount && Number(tenderAmount) > grandTotal && (

@@ -28,6 +28,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['mysql2'],
   images: {
     unoptimized: true,
     remotePatterns: [
