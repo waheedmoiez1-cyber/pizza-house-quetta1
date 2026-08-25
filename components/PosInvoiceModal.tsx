@@ -125,7 +125,7 @@ export default function PosInvoiceModal({ order, isOpen, onClose }: PosInvoiceMo
               ========================================================================= */}
           <div
             id="printable-customer-receipt"
-            className="font-mono text-[#111111] bg-white p-4 sm:p-6 rounded-2xl border border-dashed border-[#111111]/30 shadow-inner space-y-3.5 print:p-0 print:border-none print:shadow-none"
+            className="font-mono text-[#111111] bg-white p-4 sm:p-6 rounded-2xl border-2 border-dashed border-[#111111]/30 shadow-inner space-y-3.5"
           >
             {/* Header: Store Identity & FBR/PRA Tax Info */}
             <div className="text-center pb-3 border-b-2 border-dashed border-black">

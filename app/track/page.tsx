@@ -124,22 +124,35 @@ function OrderTrackerContent() {
     <div className="py-12 max-w-[1500px] mx-auto px-4 sm:px-8 lg:px-12">
       {/* Hidden Thermal Printable Receipt for window.print() */}
       {searchedOrder && (
-        <div id="printable-customer-receipt" className="hidden print:block font-mono space-y-3 text-black">
-          <div className="text-center border-b-2 border-dashed border-black pb-3">
-            <h1 className="text-2xl font-black uppercase tracking-widest leading-none mb-1">PIZZA HOUSE QUETTA</h1>
-            <p className="text-[11px] font-bold text-gray-800">Quetta&apos;s Favorite Slice Since Day One</p>
-            <p className="text-[10px] text-gray-700 leading-tight">Toghi Road, Quetta, Balochistan, Pakistan</p>
-            <p className="text-[10px] font-bold">Hotline: 0300-1234567 • Phone: 081-2820000</p>
-            <p className="text-[9px] text-gray-600 mt-1">NTN: 8294102-3 • PRA/STRN: 19-00-8294-102</p>
+        <div id="printable-customer-receipt" className="hidden print:block font-mono text-[#111111] bg-white p-5 rounded-2xl border-2 border-dashed border-[#111111]/30 space-y-3.5">
+          {/* Header: Store Identity & FBR/PRA Tax Info */}
+          <div className="text-center pb-3 border-b-2 border-dashed border-black">
+            <h1 className="text-2xl font-black uppercase tracking-widest text-[#C8102E] leading-none mb-1">
+              PIZZA HOUSE QUETTA
+            </h1>
+            <p className="text-[11px] font-bold text-[#111111]/90">
+              Quetta&apos;s Favorite Slice Since Day One
+            </p>
+            <p className="text-[10px] text-[#111111]/80 leading-tight mt-0.5">
+              Toghi Road, Quetta, Balochistan, Pakistan
+            </p>
+            <p className="text-[10px] font-bold text-[#111111]/90">
+              Hotline: 0300-1234567 • Phone: 081-2820000
+            </p>
+            <p className="text-[9px] font-mono text-[#111111]/70 mt-1">
+              NTN: 8294102-3 • PRA/STRN: 19-00-8294-102
+            </p>
+
             <div className="mt-2 py-1 px-3 bg-black text-white rounded font-black text-xs uppercase tracking-widest inline-block">
               *** SALES TAX INVOICE ***
             </div>
           </div>
 
-          <div className="text-xs space-y-1 bg-gray-100 p-2.5 rounded border border-gray-300">
+          {/* Invoice & Customer Metadata Grid */}
+          <div className="text-xs space-y-1 bg-[#111111]/5 p-3 rounded-xl border border-[#111111]/10">
             <div className="flex justify-between">
               <span className="font-bold">INVOICE NO:</span>
-              <span className="font-bold">INV-{new Date(searchedOrder.createdAt).getFullYear()}-{orderNo.replace(/^PHQ-?/, '')}</span>
+              <span className="font-bold text-[#C8102E]">INV-{new Date(searchedOrder.createdAt).getFullYear()}-{orderNo.replace(/^PHQ-?/, '')}</span>
             </div>
             <div className="flex justify-between">
               <span className="font-bold">ORDER REF:</span>
@@ -150,88 +163,175 @@ function OrderTrackerContent() {
               <span>{new Date(searchedOrder.createdAt).toLocaleString()}</span>
             </div>
             <div className="flex justify-between">
+              <span className="font-bold">POS TERMINAL:</span>
+              <span>POS-01 (MAIN COUNTER)</span>
+            </div>
+            <div className="flex justify-between items-center pt-1 border-t border-[#111111]/10">
               <span className="font-bold">ORDER TYPE:</span>
-              <span className="font-bold uppercase">{deliveryType}</span>
+              <span className="font-black text-[11px] px-2 py-0.5 rounded bg-[#C8102E] text-white uppercase">
+                {deliveryType}
+              </span>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between pt-1 border-t border-[#111111]/10">
               <span className="font-bold">CUSTOMER:</span>
-              <span>{searchedOrder.customerName} ({customerPhone})</span>
+              <span className="font-bold">{searchedOrder.customerName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="font-bold">DELIVERY:</span>
-              <span className="font-semibold text-right max-w-[210px]">{customerAddress}</span>
+              <span className="font-bold">PHONE:</span>
+              <span>{customerPhone}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="font-bold">PAYMENT:</span>
-              <span className="font-bold uppercase">{searchedOrder.paymentMethod}</span>
-            </div>
+            {customerAddress && (
+              <div className="flex justify-between items-start pt-0.5">
+                <span className="font-bold shrink-0 mr-2">DELIVERY:</span>
+                <span className="font-semibold text-right leading-tight break-words max-w-[220px]">
+                  {customerAddress}
+                </span>
+              </div>
+            )}
           </div>
 
+          {/* Itemized Billing Table */}
           <div>
-            <div className="text-xs font-bold uppercase border-b-2 border-black pb-1 flex justify-between">
+            <div className="text-[11px] font-black uppercase tracking-wider mb-2 flex justify-between border-b-2 border-black pb-1">
               <span>QTY & ITEM DETAILS</span>
-              <span>AMOUNT (PKR)</span>
+              <span>PRICE (PKR)</span>
             </div>
-            <div className="divide-y divide-dashed divide-gray-300">
+
+            <div className="divide-y divide-dashed divide-[#111111]/30">
               {searchedOrder.items.map((item: any, idx) => {
                 const itemName = item.item?.name || item.name || 'Food Item';
-                const sizeName = typeof item.selectedSize === 'object' ? item.selectedSize?.name : (item.selectedSize || item.size || '');
+                const sizeName = typeof item.selectedSize === 'object' ? (item.selectedSize as any)?.name : (item.selectedSize || item.size || '');
                 const price = item.unitPrice || item.price || 0;
                 const qty = item.quantity || 1;
-                const total = item.totalPrice || (price * qty);
+                const itemTotal = item.totalPrice || (price * qty);
 
                 return (
-                  <div key={idx} className="py-1.5 flex justify-between text-xs">
-                    <div>
-                      <span className="font-bold">[{qty}x] {itemName}</span>
-                      {sizeName && <span className="text-[10px] block text-gray-700 pl-4">• Size: {sizeName}</span>}
+                  <div key={idx} className="py-2 flex items-start justify-between gap-2 text-xs">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 font-bold">
+                        <span className="bg-black text-white px-1.5 py-0.2 rounded text-[10px] leading-none">
+                          {qty}X
+                        </span>
+                        <span className="text-[#111111]">{itemName}</span>
+                      </div>
+
+                      {sizeName && (
+                        <p className="text-[10px] font-bold text-[#C8102E] pl-6 mt-0.5">
+                          • Size: {sizeName}
+                        </p>
+                      )}
+
                       {item.selectedAddOns && item.selectedAddOns.length > 0 && (
-                        <span className="text-[9px] block text-gray-600 pl-4">
-                          + {Array.isArray(item.selectedAddOns) ? item.selectedAddOns.map((a: any) => typeof a === 'object' ? a.name : a).join(', ') : ''}
+                        <div className="text-[10px] text-[#111111]/70 pl-6 space-y-0.5 mt-0.5">
+                          {Array.isArray(item.selectedAddOns) &&
+                            item.selectedAddOns.map((addon: any, aIdx: number) => {
+                              const addOnName = typeof addon === 'object' ? addon.name : addon;
+                              return <p key={aIdx}>+ {addOnName}</p>;
+                            })}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="font-bold text-xs">
+                        Rs. {itemTotal.toLocaleString('en-PK')}
+                      </span>
+                      {qty > 1 && (
+                        <span className="block text-[9px] text-[#111111]/60">
+                          (@ Rs. {price})
                         </span>
                       )}
                     </div>
-                    <span className="font-bold">Rs. {total.toLocaleString('en-PK')}</span>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          <div className="space-y-1 text-xs pt-2 border-t-2 border-dashed border-black">
+          {/* Financial Breakdown & Tax Calculations */}
+          <div className="space-y-1 text-xs pt-2.5 border-t-2 border-dashed border-black">
             <div className="flex justify-between">
               <span>Gross Subtotal:</span>
-              <span>Rs. {(searchedOrder.subtotal || searchedOrder.total).toLocaleString('en-PK')}</span>
+              <span className="font-bold">Rs. {(searchedOrder.subtotal || searchedOrder.total).toLocaleString('en-PK')}</span>
             </div>
+
             {searchedOrder.discount ? (
-              <div className="flex justify-between font-bold">
-                <span>Promo Discount:</span>
+              <div className="flex justify-between text-emerald-800 font-bold">
+                <span>Special Promo Discount:</span>
                 <span>-Rs. {searchedOrder.discount.toLocaleString('en-PK')}</span>
               </div>
             ) : null}
+
             {searchedOrder.tax ? (
               <div className="flex justify-between">
-                <span>GST / Tax (15%):</span>
-                <span>Rs. {searchedOrder.tax.toLocaleString('en-PK')}</span>
+                <span>GST / Provincial Sales Tax (15%):</span>
+                <span className="font-bold">Rs. {searchedOrder.tax.toLocaleString('en-PK')}</span>
               </div>
             ) : null}
-            {searchedOrder.deliveryFee ? (
+
+            {searchedOrder.deliveryFee !== undefined ? (
               <div className="flex justify-between">
-                <span>Delivery Fee:</span>
-                <span>Rs. {searchedOrder.deliveryFee.toLocaleString('en-PK')}</span>
+                <span>Delivery Service Fee:</span>
+                <span className="font-bold">
+                  {searchedOrder.deliveryFee === 0 ? 'FREE' : `Rs. ${searchedOrder.deliveryFee.toLocaleString('en-PK')}`}
+                </span>
               </div>
             ) : null}
           </div>
 
-          <div className="pt-2 pb-1 border-y-2 border-black flex justify-between items-center text-sm font-black">
-            <span>NET PAYABLE:</span>
-            <span>Rs. {searchedOrder.total.toLocaleString('en-PK')}</span>
+          {/* Grand Total Net Payable */}
+          <div className="pt-2 pb-1 border-y-2 border-black flex justify-between items-center text-sm sm:text-base font-black">
+            <span>NET PAYABLE AMOUNT:</span>
+            <span className="text-lg text-[#C8102E]">
+              Rs. {searchedOrder.total.toLocaleString('en-PK')}
+            </span>
           </div>
 
-          <div className="text-center pt-2 border-t border-dashed border-gray-400 text-[9px] text-gray-700 space-y-1">
-            <p className="font-bold text-[10px]">*** FBR / PRA POS DIGITAL VERIFIED ***</p>
-            <p>Scan & verify live order status at: pizza-house-quetta.com/track?id={orderNo}</p>
-            <p>Thank you for dining with Pizza House Quetta! 100% Halal</p>
+          {/* Payment Settlement */}
+          <div className="text-xs space-y-1 bg-[#111111]/5 p-2.5 rounded-xl border border-[#111111]/10">
+            <div className="flex justify-between items-center">
+              <span className="font-bold">PAYMENT METHOD:</span>
+              <span className="font-black uppercase">
+                {searchedOrder.paymentMethod || 'Cash on Delivery (COD)'}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-bold">PAYMENT STATUS:</span>
+              <span className="font-bold text-emerald-700 uppercase">
+                {(searchedOrder.paymentStatus as string)?.toLowerCase() === 'paid' || (searchedOrder.paymentStatus as string)?.toLowerCase() === 'completed' ? 'PAID / SETTLED' : 'PENDING ON DELIVERY'}
+              </span>
+            </div>
+          </div>
+
+          {/* Scannable Verification QR Code & POS Seal */}
+          <div className="pt-2 border-t border-dashed border-black text-center space-y-2">
+            <div className="flex items-center justify-center gap-3">
+              <div className="p-1.5 bg-white border border-black rounded-lg shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=0&data=${encodeURIComponent(`https://pizza-house-quetta.com/track?id=${orderNo}`)}`}
+                  alt="Invoice QR Verification"
+                  width={70}
+                  height={70}
+                  className="object-contain"
+                />
+              </div>
+              <div className="text-left text-[10px] space-y-0.5 max-w-[200px]">
+                <p className="font-black uppercase text-[#111111] flex items-center gap-1">
+                  <span>POS VERIFIED INVOICE</span>
+                </p>
+                <p className="text-[9px] text-[#111111]/70 leading-tight">
+                  Scan QR code with any mobile camera to verify receipt & track live order.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-[10px] font-bold text-[#111111]">
+              Thank you for choosing Pizza House Quetta!
+            </p>
+            <p className="text-[9px] text-[#111111]/70">
+              100% Real Mozzarella • Oven Fresh • Halal Certified
+            </p>
           </div>
         </div>
       )}

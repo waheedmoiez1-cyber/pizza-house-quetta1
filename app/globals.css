@@ -431,11 +431,11 @@ html[data-theme="light"], html.light {
 }
 
 /* =========================================================================
-   HIGH-PERFORMANCE ZERO-DELAY PRINT STYLES (Thermal Receipt & POS Invoice)
+   PERFECT HIGH-FIDELITY PRINT STYLES (Thermal Receipt & POS Invoice)
    ========================================================================= */
 @media print {
   @page {
-    margin: 4mm;
+    margin: 4mm auto;
     size: auto;
   }
 
@@ -443,9 +443,7 @@ html[data-theme="light"], html.light {
   html, body {
     background: #FFFFFF !important;
     background-color: #FFFFFF !important;
-    color: #000000 !important;
-    font-size: 12px !important;
-    line-height: 1.3 !important;
+    color: #111111 !important;
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
@@ -453,101 +451,66 @@ html[data-theme="light"], html.light {
     overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
-  /* Disable all animations, transitions, blur filters, and shadows to prevent print delay */
+  /* Disable animations and transitions for instant crisp print rendering */
   *,
   *::before,
   *::after {
     animation: none !important;
     transition: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
-  /* Hide all non-printable elements */
-  header,
-  footer,
-  nav,
-  aside,
-  .no-print,
-  .print-hidden,
-  [class*="print:hidden"],
-  [class*="backdrop-blur"],
-  button,
-  .animate-pulse,
-  .animate-bounce,
-  .animate-ping,
-  .animate-marquee,
-  .animate-float-orb,
-  .animate-pulse-glow,
-  /* Hide fixed modal backdrop when printing */
-  [role="dialog"] > div:first-child,
-  .fixed.inset-0.bg-black\/80,
-  .fixed.inset-0.bg-black\/75,
-  .fixed.inset-0.bg-black\/85 {
-    display: none !important;
+  /* Hide entire page contents by default */
+  body * {
     visibility: hidden !important;
   }
 
-  /* Ensure modal dialog wrapper resets to top left static flow */
-  .fixed.inset-0 {
-    position: static !important;
-    display: block !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: transparent !important;
-    overflow: visible !important;
+  /* Only make the printable receipt container and all its elements visible */
+  #printable-customer-receipt,
+  #printable-customer-receipt *,
+  #printable-kitchen-ticket,
+  #printable-kitchen-ticket *,
+  .printable-area,
+  .printable-area * {
+    visibility: visible !important;
   }
 
-  /* Printable Ticket & Receipt Container */
-  .printable-area,
+  /* Position the active printable receipt cleanly centered on paper */
+  #printable-customer-receipt,
   #printable-kitchen-ticket,
-  #printable-customer-receipt {
-    position: static !important;
-    display: block !important;
-    visibility: visible !important;
-    width: 100% !important;
-    max-width: 80mm !important;
+  .printable-area {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: 0 !important;
     margin: 0 auto !important;
-    padding: 2mm !important;
+    width: 100% !important;
+    max-width: 400px !important;
+    padding: 16px !important;
     background: #FFFFFF !important;
     background-color: #FFFFFF !important;
-    color: #000000 !important;
-    border: none !important;
-    box-shadow: none !important;
-    transform: none !important;
+    border: 1.5px dashed rgba(17, 17, 17, 0.4) !important;
+    border-radius: 16px !important;
+    box-sizing: border-box !important;
+    display: block !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    font-family: 'Courier New', Courier, monospace, sans-serif !important;
-  }
-
-  /* High-contrast printable typography & elements */
-  .printable-area *,
-  #printable-kitchen-ticket *,
-  #printable-customer-receipt * {
-    visibility: visible !important;
-    color: #000000 !important;
-    background-color: transparent !important;
-    border-color: #333333 !important;
-  }
-
-  .printable-area .bg-\[\#C8102E\],
-  #printable-kitchen-ticket .bg-\[\#C8102E\],
-  #printable-customer-receipt .bg-\[\#C8102E\] {
-    background-color: #000000 !important;
-    color: #FFFFFF !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
-  .printable-area .text-\[\#C8102E\],
-  #printable-kitchen-ticket .text-\[\#C8102E\],
-  #printable-customer-receipt .text-\[\#C8102E\] {
-    color: #000000 !important;
-    font-weight: 900 !important;
+  /* Hide interactive buttons, tabs, modal close triggers */
+  .print\:hidden,
+  [class*="print:hidden"],
+  button,
+  a[href^="https://wa.me"] {
+    display: none !important;
+    visibility: hidden !important;
   }
 }
-
